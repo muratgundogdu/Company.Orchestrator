@@ -1,0 +1,33 @@
+{
+  "name": "Excel Write Demo",
+  "defaultVariables": {
+    "reportTitle": "Q2 Sales Report"
+  },
+  "steps": [
+    {
+      "id": "write-data",
+      "name": "Write Sales Data to Excel",
+      "type": "excel.write",
+      "config": {
+        "outputName": "sales-report.xlsx",
+        "sheetName": "Sales",
+        "includeHeader": "true",
+        "staticData": "[{\"Region\":\"North\",\"Product\":\"Widget A\",\"Units\":120,\"Revenue\":6000},{\"Region\":\"South\",\"Product\":\"Widget B\",\"Units\":85,\"Revenue\":4250},{\"Region\":\"East\",\"Product\":\"Widget A\",\"Units\":200,\"Revenue\":10000},{\"Region\":\"West\",\"Product\":\"Widget C\",\"Units\":55,\"Revenue\":2750}]"
+      },
+      "nextStepId": "add-summary"
+    },
+    {
+      "id": "add-summary",
+      "name": "Add Summary Cell",
+      "type": "excel.write-cell",
+      "config": {
+        "artifactName": "sales-report.xlsx",
+        "sheetName": "Sales",
+        "cellAddress": "A6",
+        "value": "TOTAL",
+        "outputArtifactName": "sales-report-final.xlsx"
+      },
+      "nextStepId": null
+    }
+  ]
+}

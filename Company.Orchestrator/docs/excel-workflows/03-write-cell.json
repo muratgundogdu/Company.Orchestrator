@@ -1,0 +1,61 @@
+{
+  "name": "Excel Write Cell Demo",
+  "defaultVariables": {
+    "statusValue": "APPROVED",
+    "approvedBy": "John Manager",
+    "approvalDate": "2026-06-18"
+  },
+  "steps": [
+    {
+      "id": "create-template",
+      "name": "Create Approval Template",
+      "type": "excel.write",
+      "config": {
+        "outputName": "approval-template.xlsx",
+        "sheetName": "ApprovalForm",
+        "includeHeader": "false",
+        "staticData": "[{\"A\":\"Invoice #:\",\"B\":\"INV-2026-0042\"},{\"A\":\"Amount:\",\"B\":\"$12,750.00\"},{\"A\":\"Status:\",\"B\":\"PENDING\"},{\"A\":\"Approved By:\",\"B\":\"\"},{\"A\":\"Date:\",\"B\":\"\"}]"
+      },
+      "nextStepId": "set-status"
+    },
+    {
+      "id": "set-status",
+      "name": "Set Status to Approved",
+      "type": "excel.write-cell",
+      "config": {
+        "artifactName": "approval-template.xlsx",
+        "sheetName": "ApprovalForm",
+        "cellAddress": "B3",
+        "value": "{{statusValue}}",
+        "outputArtifactName": "approval-with-status.xlsx"
+      },
+      "nextStepId": "set-approver"
+    },
+    {
+      "id": "set-approver",
+      "name": "Set Approver Name",
+      "type": "excel.write-cell",
+      "config": {
+        "artifactName": "approval-with-status.xlsx",
+        "sheetName": "ApprovalForm",
+        "cellAddress": "B4",
+        "value": "{{approvedBy}}",
+        "outputArtifactName": "approval-with-approver.xlsx"
+      },
+      "nextStepId": "set-date"
+    },
+    {
+      "id": "set-date",
+      "name": "Set Approval Date",
+      "type": "excel.write-cell",
+      "config": {
+        "artifactName": "approval-with-approver.xlsx",
+        "sheetName": "ApprovalForm",
+        "cellAddress": "B5",
+        "value": "{{approvalDate}}",
+        "outputArtifactName": "approval-final.xlsx"
+      },
+      "nextStepId": null
+    }
+  ]
+}

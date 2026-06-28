@@ -1,0 +1,39 @@
+{
+  "name": "Excel Read and Process Demo",
+  "defaultVariables": {},
+  "steps": [
+    {
+      "id": "create-workbook",
+      "name": "Create Sample Workbook",
+      "type": "excel.write",
+      "config": {
+        "outputName": "employees.xlsx",
+        "sheetName": "Employees",
+        "includeHeader": "true",
+        "staticData": "[{\"EmployeeId\":\"E001\",\"Name\":\"Alice Johnson\",\"Department\":\"Engineering\",\"Salary\":95000},{\"EmployeeId\":\"E002\",\"Name\":\"Bob Smith\",\"Department\":\"Sales\",\"Salary\":72000},{\"EmployeeId\":\"E003\",\"Name\":\"Carol White\",\"Department\":\"HR\",\"Salary\":68000},{\"EmployeeId\":\"E004\",\"Name\":\"Dave Brown\",\"Department\":\"Engineering\",\"Salary\":102000}]"
+      },
+      "nextStepId": "read-data"
+    },
+    {
+      "id": "read-data",
+      "name": "Read Employees Sheet",
+      "type": "excel.read",
+      "config": {
+        "artifactName": "employees.xlsx",
+        "sheetName": "Employees",
+        "hasHeaderRow": "true",
+        "outputVariable": "employeeRows"
+      },
+      "nextStepId": "log-count"
+    },
+    {
+      "id": "log-count",
+      "name": "Delay and confirm row count",
+      "type": "Delay",
+      "config": {
+        "seconds": "1"
+      },
+      "nextStepId": null
+    }
+  ]
+}

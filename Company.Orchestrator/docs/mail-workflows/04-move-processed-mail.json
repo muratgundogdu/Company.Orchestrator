@@ -1,0 +1,64 @@
+{
+  "name": "process-and-archive-mail",
+  "description": "Downloads attachments, processes them, marks messages as read, and moves them to an Archive folder.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "download-attachments",
+      "type": "mail.read-attachments",
+      "name": "Download attachments from INBOX",
+      "config": {
+        "folder": "INBOX",
+        "unreadOnly": "true",
+        "subjectContains": "Invoice",
+        "hasAttachments": "true",
+        "maxCount": "10",
+        "artifactPrefix": "invoice",
+        "outputVariable": "invoiceArtifacts"
+      },
+      "onSuccess": "process-data",
+      "onFailure": "error-notify"
+    },
+    {
+      "id": "process-data",
+      "type": "delay",
+      "name": "Business logic: validate and process invoices",
+      "config": {
+        "milliseconds": 200
+      },
+      "onSuccess": "mark-read",
+      "onFailure": "error-notify"
+    },
+    {
+      "id": "mark-read",
+      "type": "mail.mark-read",
+      "name": "Mark processed message as read",
+      "config": {
+        "messageId": "{{currentMessageId}}",
+        "sourceFolder": "INBOX"
+      },
+      "onSuccess": "archive-mail"
+    },
+    {
+      "id": "archive-mail",
+      "type": "mail.move",
+      "name": "Move processed message to Archive",
+      "config": {
+        "messageId": "{{currentMessageId}}",
+        "targetFolder": "Archive",
+        "sourceFolder": "INBOX"
+      }
+    },
+    {
+      "id": "error-notify",
+      "type": "mail.send",
+      "name": "Notify admin on failure",
+      "config": {
+        "to": "admin@company.com",
+        "subject": "Invoice processing failed",
+        "body": "An error occurred while processing an invoice email. Please check the workflow logs.",
+        "isHtml": "false"
+      }
+    }
+  ]
+}

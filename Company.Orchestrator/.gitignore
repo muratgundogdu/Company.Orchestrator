@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.swp
+
+## Logs
+logs/
+
+## EF Core
+*.db
+*.sqlite
+
+## Secrets
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+
+## OS
+.DS_Store
+Thumbs.db

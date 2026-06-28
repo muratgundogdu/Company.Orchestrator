@@ -1,0 +1,67 @@
+{
+  "name": "excel-transform-from-folder",
+  "description": "Reads an Excel file from a local folder, applies transformations (add sheet, multiply column C x2 into new sheet, delete row 3, remove empty rows, sort by column B), then writes the transformed file back to the output folder.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "read-from-folder",
+      "type": "folder.read-file",
+      "name": "Read source Excel file from input folder",
+      "config": {
+        "sourcePath": "C:\\Temp\\AlterOneInput\\source.xlsx",
+        "artifactName": "source-excel"
+      },
+      "onSuccess": "transform-excel"
+    },
+    {
+      "id": "transform-excel",
+      "type": "excel.transform",
+      "name": "Apply transformations to source Excel",
+      "config": {
+        "inputArtifactName": "source-excel",
+        "outputName": "transformed-excel",
+        "operations": [
+          {
+            "type": "addSheet",
+            "sheetName": "Sonuc"
+          },
+          {
+            "type": "multiplyColumn",
+            "sourceSheet": "Data",
+            "sourceColumn": "C",
+            "factor": 2,
+            "targetSheet": "Sonuc",
+            "targetColumn": "A",
+            "targetHeader": "C x 2"
+          },
+          {
+            "type": "deleteRow",
+            "sheetName": "Data",
+            "rowNumber": 3
+          },
+          {
+            "type": "removeEmptyRows",
+            "sheetName": "Data"
+          },
+          {
+            "type": "sortByColumn",
+            "sheetName": "Data",
+            "column": "B",
+            "direction": "asc"
+          }
+        ]
+      },
+      "onSuccess": "write-to-folder"
+    },
+    {
+      "id": "write-to-folder",
+      "type": "folder.write-file",
+      "name": "Write transformed Excel to output folder",
+      "config": {
+        "artifactName": "transformed-excel.xlsx",
+        "destinationPath": "C:\\Temp\\AlterOneOutput\\transformed-excel.xlsx",
+        "overwrite": "true"
+      }
+    }
+  ]
+}

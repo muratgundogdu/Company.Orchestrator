@@ -1,0 +1,65 @@
+{
+  "name": "Build Excel Report and Save to Shared Folder",
+  "defaultVariables": {
+    "outputFolder": "C:\\OrchestratorSamples\\Output",
+    "reportDate": "2026-06-18"
+  },
+  "steps": [
+    {
+      "id": "ensure-output-dir",
+      "name": "Create output directory if missing",
+      "type": "Delay",
+      "config": {
+        "seconds": "0"
+      },
+      "nextStepId": "build-excel"
+    },
+    {
+      "id": "build-excel",
+      "name": "Generate Daily Report Excel",
+      "type": "excel.write",
+      "config": {
+        "outputName": "daily-report-{{reportDate}}.xlsx",
+        "sheetName": "DailyReport",
+        "includeHeader": "true",
+        "staticData": "[{\"Region\":\"North\",\"Units\":120,\"Revenue\":6000.00},{\"Region\":\"South\",\"Units\":85,\"Revenue\":4250.00},{\"Region\":\"East\",\"Units\":200,\"Revenue\":10000.00},{\"Region\":\"West\",\"Units\":55,\"Revenue\":2750.00}]"
+      },
+      "nextStepId": "write-to-folder"
+    },
+    {
+      "id": "write-to-folder",
+      "name": "Save report to output folder",
+      "type": "folder.write-file",
+      "config": {
+        "artifactName": "daily-report-{{reportDate}}.xlsx",
+        "destinationPath": "{{outputFolder}}\\daily-report-{{reportDate}}.xlsx",
+        "overwrite": "true"
+      },
+      "nextStepId": "write-csv-backup"
+    },
+    {
+      "id": "write-csv-backup",
+      "name": "Export CSV backup",
+      "type": "excel.to-csv",
+      "config": {
+        "artifactName": "daily-report-{{reportDate}}.xlsx",
+        "sheetName": "DailyReport",
+        "outputVariable": "reportCsv",
+        "saveAsArtifact": "true",
+        "outputArtifactName": "daily-report-{{reportDate}}.csv"
+      },
+      "nextStepId": "write-csv-to-folder"
+    },
+    {
+      "id": "write-csv-to-folder",
+      "name": "Save CSV backup to output folder",
+      "type": "folder.write-file",
+      "config": {
+        "artifactName": "daily-report-{{reportDate}}.csv",
+        "destinationPath": "{{outputFolder}}\\daily-report-{{reportDate}}.csv",
+        "overwrite": "true"
+      },
+      "nextStepId": null
+    }
+  ]
+}

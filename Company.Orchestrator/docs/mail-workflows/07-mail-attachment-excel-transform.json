@@ -1,0 +1,86 @@
+{
+  "name": "mail-attachment-excel-transform",
+  "description": "Downloads an Excel attachment from Gmail (subject: RAPOR TEST), multiplies column C by 2 into a new 'Sonuc' sheet, deletes the original row 3, filters rows where column B > 0, then writes the transformed file to C:\\Temp\\AlterOneOutput\\.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "download-attachment",
+      "type": "mail.read-attachments",
+      "name": "Download Excel attachment from RAPOR TEST email",
+      "config": {
+        "folder": "INBOX",
+        "unreadOnly": "false",
+        "subjectContains": "RAPOR TEST",
+        "hasAttachments": "true",
+        "maxCount": "1",
+        "artifactPrefix": "rapor-test",
+        "outputVariable": "mailArtifacts"
+      },
+      "onSuccess": "transform-excel"
+    },
+    {
+      "id": "transform-excel",
+      "type": "excel.transform",
+      "name": "Apply business transformations to downloaded attachment",
+      "config": {
+        "inputArtifactName": "{{mailArtifacts_0}}",
+        "outputName": "rapor-sonuc",
+        "operations": [
+          {
+            "type": "addSheet",
+            "sheetName": "Sonuc"
+          },
+          {
+            "type": "multiplyColumn",
+            "sourceSheet": "Data",
+            "sourceColumn": "C",
+            "factor": 2,
+            "targetSheet": "Sonuc",
+            "targetColumn": "A",
+            "targetHeader": "C x 2"
+          },
+          {
+            "type": "deleteRow",
+            "sheetName": "Data",
+            "rowNumber": 3
+          },
+          {
+            "type": "filterRows",
+            "sheetName": "Data",
+            "column": "B",
+            "operator": "greaterThan",
+            "value": "0",
+            "invert": "false"
+          },
+          {
+            "type": "removeEmptyRows",
+            "sheetName": "Data"
+          }
+        ]
+      },
+      "onSuccess": "read-transformed-excel"
+    },
+    {
+      "id": "read-transformed-excel",
+      "type": "excel.read",
+      "name": "Read transformed Data sheet to capture row count",
+      "config": {
+        "artifactName": "rapor-sonuc.xlsx",
+        "sheetName": "Data",
+        "outputVariable": "transformedRows",
+        "hasHeaderRow": "true"
+      },
+      "onSuccess": "write-to-folder"
+    },
+    {
+      "id": "write-to-folder",
+      "type": "folder.write-file",
+      "name": "Write transformed Excel to output folder",
+      "config": {
+        "artifactName": "rapor-sonuc.xlsx",
+        "destinationPath": "C:\\Temp\\AlterOneOutput\\rapor-sonuc.xlsx",
+        "overwrite": "true"
+      }
+    }
+  ]
+}

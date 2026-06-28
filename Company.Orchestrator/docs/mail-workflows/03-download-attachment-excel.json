@@ -1,0 +1,42 @@
+{
+  "name": "download-attachment-read-excel",
+  "description": "Downloads attachments from incoming emails matching 'Rapor' and parses each XLSX with excel.read.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "download-attachments",
+      "type": "mail.read-attachments",
+      "name": "Download Excel attachments from inbox",
+      "config": {
+        "folder": "INBOX",
+        "unreadOnly": "true",
+        "subjectContains": "Rapor",
+        "hasAttachments": "true",
+        "maxCount": "5",
+        "artifactPrefix": "rapor",
+        "outputVariable": "attachmentArtifacts"
+      },
+      "onSuccess": "read-first-excel"
+    },
+    {
+      "id": "read-first-excel",
+      "type": "excel.read",
+      "name": "Parse first downloaded attachment",
+      "config": {
+        "artifactName": "rapor_{{attachmentArtifacts[0]}}",
+        "sheetName": "Sheet1",
+        "outputVariable": "excelRows",
+        "hasHeaderRow": "true"
+      },
+      "onSuccess": "mark-processed"
+    },
+    {
+      "id": "mark-processed",
+      "type": "delay",
+      "name": "Business logic: process parsed rows",
+      "config": {
+        "milliseconds": 100
+      }
+    }
+  ]
+}

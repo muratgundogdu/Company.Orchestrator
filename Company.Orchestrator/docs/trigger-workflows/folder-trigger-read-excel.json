@@ -1,0 +1,67 @@
+{
+  "$schema": "../workflow-schema.json",
+  "name": "folder-trigger-read-excel",
+  "description": "Triggered automatically when an Excel file lands in a watched folder. Reads the file, extracts data, and moves it to the Processed or Error folder.",
+  "version": "1",
+  "steps": [
+
+    {
+      "id": "read-trigger-file",
+      "type": "folder.read-file",
+      "name": "Read trigger file from watched folder",
+      "config": {
+        "sourcePath": "{{triggerFilePath}}",
+        "artifactName": "trigger-input.xlsx"
+      },
+      "onSuccess": "read-excel",
+      "onFailure": "move-to-error"
+    },
+
+    {
+      "id": "read-excel",
+      "type": "excel.read",
+      "name": "Parse Excel worksheet",
+      "config": {
+        "sourceArtifact": "@read-trigger-file.artifact",
+        "sheetName": "Sheet1",
+        "outputVariable": "excelRows"
+      },
+      "onSuccess": "log-result",
+      "onFailure": "move-to-error"
+    },
+
+    {
+      "id": "log-result",
+      "type": "delay",
+      "name": "Processing pause (simulate business logic)",
+      "config": {
+        "milliseconds": 100
+      },
+      "onSuccess": "move-to-processed",
+      "onFailure": "move-to-error"
+    },
+
+    {
+      "id": "move-to-processed",
+      "type": "folder.move-file",
+      "name": "Archive processed file",
+      "config": {
+        "sourcePath": "{{triggerFilePath}}",
+        "destinationPath": "C:\\Temp\\AlterOneInput\\Processed\\{{triggerFileName}}",
+        "overwrite": true
+      }
+    },
+
+    {
+      "id": "move-to-error",
+      "type": "folder.move-file",
+      "name": "Move failed file to error folder",
+      "config": {
+        "sourcePath": "{{triggerFilePath}}",
+        "destinationPath": "C:\\Temp\\AlterOneInput\\Error\\{{triggerFileName}}",
+        "overwrite": true
+      }
+    }
+
+  ]
+}

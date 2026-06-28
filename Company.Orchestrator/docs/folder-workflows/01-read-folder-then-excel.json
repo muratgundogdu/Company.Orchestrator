@@ -1,0 +1,53 @@
+{
+  "name": "Read Shared Folder File then Process as Excel",
+  "defaultVariables": {
+    "inputFolder": "C:\\OrchestratorSamples\\Input",
+    "inputFile": "sales-data.xlsx"
+  },
+  "steps": [
+    {
+      "id": "check-file",
+      "name": "Verify source file exists",
+      "type": "folder.list-files",
+      "config": {
+        "folderPath": "{{inputFolder}}",
+        "searchPattern": "*.xlsx",
+        "outputVariable": "availableFiles"
+      },
+      "nextStepId": "read-file"
+    },
+    {
+      "id": "read-file",
+      "name": "Read Excel file from shared folder",
+      "type": "folder.read-file",
+      "config": {
+        "sourcePath": "{{inputFolder}}\\{{inputFile}}",
+        "artifactName": "sales-data"
+      },
+      "nextStepId": "parse-excel"
+    },
+    {
+      "id": "parse-excel",
+      "name": "Parse Sales Sheet",
+      "type": "excel.read",
+      "config": {
+        "artifactName": "sales-data",
+        "sheetName": "Sheet1",
+        "hasHeaderRow": "true",
+        "outputVariable": "salesRows"
+      },
+      "nextStepId": "archive-file"
+    },
+    {
+      "id": "archive-file",
+      "name": "Archive processed file",
+      "type": "folder.move-file",
+      "config": {
+        "sourcePath": "{{inputFolder}}\\{{inputFile}}",
+        "destinationPath": "{{inputFolder}}\\Processed\\{{inputFile}}",
+        "overwrite": "true"
+      },
+      "nextStepId": null
+    }
+  ]
+}

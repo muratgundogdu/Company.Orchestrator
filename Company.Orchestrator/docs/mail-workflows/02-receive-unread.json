@@ -1,0 +1,29 @@
+{
+  "name": "receive-unread-mails",
+  "description": "Reads unread messages from INBOX and stores their metadata as a workflow variable.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "read-inbox",
+      "type": "mail.receive",
+      "name": "Read unread messages from INBOX",
+      "config": {
+        "folder": "INBOX",
+        "unreadOnly": "true",
+        "subjectContains": "Rapor",
+        "hasAttachments": "true",
+        "maxCount": "5",
+        "outputVariable": "receivedMails"
+      },
+      "onSuccess": "mark-read"
+    },
+    {
+      "id": "mark-read",
+      "type": "delay",
+      "name": "Process mail list (business logic placeholder)",
+      "config": {
+        "milliseconds": 50
+      }
+    }
+  ]
+}

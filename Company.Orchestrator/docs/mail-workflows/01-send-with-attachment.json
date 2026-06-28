@@ -1,0 +1,36 @@
+{
+  "name": "send-mail-with-excel-attachment",
+  "description": "Builds an Excel report and sends it as an email attachment.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "create-report",
+      "type": "excel.write",
+      "name": "Create Excel report",
+      "config": {
+        "artifactName": "monthly-report.xlsx",
+        "sheetName": "Report",
+        "data": [
+          ["Month", "Revenue", "Expenses"],
+          ["January", "50000", "30000"],
+          ["February", "55000", "32000"]
+        ]
+      },
+      "onSuccess": "send-mail"
+    },
+    {
+      "id": "send-mail",
+      "type": "mail.send",
+      "name": "Send report email",
+      "config": {
+        "to": "{{recipientEmail}}",
+        "cc": "manager@company.com",
+        "bcc": "archive@company.com",
+        "subject": "Monthly Report — {{month}}",
+        "body": "<h2>Monthly Report</h2><p>Please find the monthly report attached.</p>",
+        "isHtml": "true",
+        "attachments": "monthly-report.xlsx"
+      }
+    }
+  ]
+}

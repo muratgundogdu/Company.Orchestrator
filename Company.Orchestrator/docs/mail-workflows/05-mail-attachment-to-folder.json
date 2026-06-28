@@ -1,0 +1,44 @@
+{
+  "name": "mail-attachment-to-folder",
+  "description": "Phase 4 validation workflow. Reads an email from Gmail filtered by subject 'RAPOR TEST', downloads the Excel attachment, reads the 'Data' sheet, and writes the file to C:\\Temp\\AlterOneOutput\\.",
+  "version": "1",
+  "steps": [
+    {
+      "id": "download-attachment",
+      "type": "mail.read-attachments",
+      "name": "Download Excel attachment from RAPOR TEST email",
+      "config": {
+        "folder": "INBOX",
+        "unreadOnly": "false",
+        "subjectContains": "RAPOR TEST",
+        "hasAttachments": "true",
+        "maxCount": "1",
+        "artifactPrefix": "rapor-test",
+        "outputVariable": "mailArtifacts"
+      },
+      "onSuccess": "read-excel"
+    },
+    {
+      "id": "read-excel",
+      "type": "excel.read",
+      "name": "Read Data sheet from downloaded attachment",
+      "config": {
+        "artifactName": "{{mailArtifacts_0}}",
+        "sheetName": "Data",
+        "outputVariable": "excelRows",
+        "hasHeaderRow": "true"
+      },
+      "onSuccess": "write-to-folder"
+    },
+    {
+      "id": "write-to-folder",
+      "type": "folder.write-file",
+      "name": "Write attachment to output folder",
+      "config": {
+        "artifactName": "{{mailArtifacts_0}}",
+        "destinationPath": "C:\\Temp\\AlterOneOutput\\{{mailArtifacts_0}}",
+        "overwrite": "true"
+      }
+    }
+  ]
+}

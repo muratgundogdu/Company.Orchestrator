@@ -1,0 +1,43 @@
+{
+  "name": "Excel to CSV Export Demo",
+  "defaultVariables": {},
+  "steps": [
+    {
+      "id": "create-source",
+      "name": "Create Source Excel File",
+      "type": "excel.write",
+      "config": {
+        "outputName": "products.xlsx",
+        "sheetName": "Products",
+        "includeHeader": "true",
+        "staticData": "[{\"SKU\":\"P001\",\"Name\":\"Blue Widget\",\"Category\":\"Hardware\",\"Price\":29.99,\"Stock\":150},{\"SKU\":\"P002\",\"Name\":\"Red Widget\",\"Category\":\"Hardware\",\"Price\":34.99,\"Stock\":89},{\"SKU\":\"P003\",\"Name\":\"Basic Service\",\"Category\":\"Service\",\"Price\":99.99,\"Stock\":999},{\"SKU\":\"P004\",\"Name\":\"Premium Plan\",\"Category\":\"Service\",\"Price\":199.99,\"Stock\":999},{\"SKU\":\"P005\",\"Name\":\"Green, Large Widget\",\"Category\":\"Hardware\",\"Price\":49.99,\"Stock\":42}]"
+      },
+      "nextStepId": "export-csv"
+    },
+    {
+      "id": "export-csv",
+      "name": "Export Products Sheet to CSV",
+      "type": "excel.to-csv",
+      "config": {
+        "artifactName": "products.xlsx",
+        "sheetName": "Products",
+        "outputVariable": "productsCsv",
+        "saveAsArtifact": "true",
+        "outputArtifactName": "products-export.csv"
+      },
+      "nextStepId": "read-csv-back"
+    },
+    {
+      "id": "read-csv-back",
+      "name": "Read the CSV artifact back",
+      "type": "excel.read",
+      "config": {
+        "artifactName": "products-export.csv",
+        "sheetName": "products-export",
+        "hasHeaderRow": "true",
+        "outputVariable": "csvRows"
+      },
+      "nextStepId": null
+    }
+  ]
+}

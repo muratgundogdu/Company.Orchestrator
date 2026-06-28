@@ -1,0 +1,66 @@
+{
+  "name": "List Folder Files and Archive",
+  "defaultVariables": {
+    "watchFolder": "C:\\OrchestratorSamples\\Watch",
+    "archiveFolder": "C:\\OrchestratorSamples\\Archive",
+    "filePattern": "*.xlsx"
+  },
+  "steps": [
+    {
+      "id": "list-files",
+      "name": "List all Excel files in watch folder",
+      "type": "folder.list-files",
+      "config": {
+        "folderPath": "{{watchFolder}}",
+        "searchPattern": "{{filePattern}}",
+        "recursive": "false",
+        "outputVariable": "pendingFiles"
+      },
+      "nextStepId": "read-first-file"
+    },
+    {
+      "id": "read-first-file",
+      "name": "Read first file as artifact",
+      "type": "folder.read-file",
+      "config": {
+        "sourcePath": "{{watchFolder}}\\sample.xlsx",
+        "artifactName": "sample-workbook"
+      },
+      "continueOnError": true,
+      "nextStepId": "copy-to-archive"
+    },
+    {
+      "id": "copy-to-archive",
+      "name": "Copy file to archive folder",
+      "type": "folder.copy-file",
+      "config": {
+        "sourcePath": "{{watchFolder}}\\sample.xlsx",
+        "destinationPath": "{{archiveFolder}}\\sample.xlsx",
+        "overwrite": "true"
+      },
+      "continueOnError": true,
+      "nextStepId": "delete-original"
+    },
+    {
+      "id": "delete-original",
+      "name": "Remove original from watch folder",
+      "type": "folder.delete-file",
+      "config": {
+        "path": "{{watchFolder}}\\sample.xlsx",
+        "failIfNotFound": "false"
+      },
+      "nextStepId": "list-archive"
+    },
+    {
+      "id": "list-archive",
+      "name": "Verify archive folder content",
+      "type": "folder.list-files",
+      "config": {
+        "folderPath": "{{archiveFolder}}",
+        "searchPattern": "*.xlsx",
+        "outputVariable": "archivedFiles"
+      },
+      "nextStepId": null
+    }
+  ]
+}
