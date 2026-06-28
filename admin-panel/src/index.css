@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #9e0d49;
+  --color-primary-dark: #7a0a39;
+  --color-text: #414141;
+  --color-text-inverse: #ffffff;
+}
+
+@layer base {
+  body {
+    font-family: "Klavika", "Inter", "Segoe UI", Arial, sans-serif;
+    @apply bg-gray-50 antialiased;
+    color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  h1, h2, h3 {
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn text-white;
+    background-color: var(--color-primary);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+  }
+  .btn-primary:focus {
+    --tw-ring-color: var(--color-primary);
+  }
+  .btn-secondary {
+    @apply btn bg-white border border-gray-300 hover:bg-gray-50 focus:ring-gray-400;
+    color: var(--color-text);
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  .btn-success {
+    @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+  }
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+  .card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+  .table-th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider border-b border-gray-200;
+    color: var(--color-text);
+    background-color: #f3f4f6;
+  }
+  .table-td {
+    @apply px-4 py-3 text-sm whitespace-nowrap border-b border-gray-100;
+    color: var(--color-text);
+  }
+  .table-tr {
+    @apply transition-colors;
+  }
+  .table-tr:hover .table-td {
+    background-color: #f9fafb;
+  }
+  .table-tr:last-child .table-td {
+    @apply border-b-0;
+  }
+  .input {
+    @apply block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-1;
+    color: var(--color-text);
+  }
+  .input:focus {
+    border-color: var(--color-primary);
+    --tw-ring-color: var(--color-primary);
+  }
+  .label {
+    @apply block text-sm font-medium mb-1;
+    color: var(--color-text);
+  }
+}

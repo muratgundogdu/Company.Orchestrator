@@ -1,0 +1,619 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "ExtendedNumerics.BigDecimal/3003.0.0.346": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/ExtendedNumerics.BigDecimal.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/ExtendedNumerics.BigDecimal.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.7": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/10.0.7": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7",
+          "System.Diagnostics.DiagnosticSource": "10.0.7"
+        },
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/Microsoft.Extensions.Logging.Abstractions.targets": {}
+        }
+      },
+      "NCalc.Core/6.3.2": {
+        "type": "package",
+        "dependencies": {
+          "ExtendedNumerics.BigDecimal": "3003.0.0.346",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.7",
+          "NCalc.Parser": "6.3.2",
+          "Parlot": "1.5.7",
+          "System.Collections.Immutable": "10.0.7"
+        },
+        "compile": {
+          "lib/net8.0/NCalc.Core.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/NCalc.Core.dll": {}
+        }
+      },
+      "NCalc.Domain/6.3.2": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/NCalc.Domain.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/NCalc.Domain.dll": {}
+        }
+      },
+      "NCalc.Parser/6.3.2": {
+        "type": "package",
+        "dependencies": {
+          "NCalc.Domain": "6.3.2",
+          "Parlot": "1.5.7"
+        },
+        "compile": {
+          "lib/net8.0/NCalc.Parser.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/NCalc.Parser.dll": {}
+        }
+      },
+      "NCalcSync/6.3.2": {
+        "type": "package",
+        "dependencies": {
+          "NCalc.Core": "6.3.2"
+        },
+        "compile": {
+          "lib/net8.0/NCalc.Sync.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/NCalc.Sync.dll": {}
+        }
+      },
+      "Parlot/1.5.7": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Parlot.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Parlot.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/Parlot.props": {}
+        }
+      },
+      "System.Collections.Immutable/10.0.9": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.Collections.Immutable.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Collections.Immutable.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "System.Diagnostics.DiagnosticSource/10.0.7": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.Diagnostics.DiagnosticSource.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Diagnostics.DiagnosticSource.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "System.Reflection.Metadata/10.0.9": {
+        "type": "package",
+        "dependencies": {
+          "System.Collections.Immutable": "10.0.9"
+        },
+        "compile": {
+          "lib/net8.0/System.Reflection.Metadata.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Reflection.Metadata.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "System.Reflection.MetadataLoadContext/10.0.9": {
+        "type": "package",
+        "dependencies": {
+          "System.Collections.Immutable": "10.0.9",
+          "System.Reflection.Metadata": "10.0.9"
+        },
+        "compile": {
+          "lib/net8.0/System.Reflection.MetadataLoadContext.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Reflection.MetadataLoadContext.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ExtendedNumerics.BigDecimal/3003.0.0.346": {
+      "sha512": "o6qdyacVFNvDKX6T0sDEdhMKppdCiTwpj22kdgNfQlIviLSAiLqv/i4G/gYL4ZzqBYzR/o3t8wDWCX21Tt/i1A==",
+      "type": "package",
+      "path": "extendednumerics.bigdecimal/3003.0.0.346",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "extendednumerics.bigdecimal.3003.0.0.346.nupkg.sha512",
+        "extendednumerics.bigdecimal.nuspec",
+        "lib/net45/ExtendedNumerics.BigDecimal.dll",
+        "lib/net45/ExtendedNumerics.BigDecimal.xml",
+        "lib/net46/ExtendedNumerics.BigDecimal.dll",
+        "lib/net46/ExtendedNumerics.BigDecimal.xml",
+        "lib/net472/ExtendedNumerics.BigDecimal.dll",
+        "lib/net472/ExtendedNumerics.BigDecimal.xml",
+        "lib/net48/ExtendedNumerics.BigDecimal.dll",
+        "lib/net48/ExtendedNumerics.BigDecimal.xml",
+        "lib/net5.0/ExtendedNumerics.BigDecimal.dll",
+        "lib/net5.0/ExtendedNumerics.BigDecimal.xml",
+        "lib/net6.0/ExtendedNumerics.BigDecimal.dll",
+        "lib/net6.0/ExtendedNumerics.BigDecimal.xml",
+        "lib/net7.0/ExtendedNumerics.BigDecimal.dll",
+        "lib/net7.0/ExtendedNumerics.BigDecimal.xml",
+        "lib/net8.0/ExtendedNumerics.BigDecimal.dll",
+        "lib/net8.0/ExtendedNumerics.BigDecimal.xml",
+        "lib/netcoreapp3.1/ExtendedNumerics.BigDecimal.dll",
+        "lib/netcoreapp3.1/ExtendedNumerics.BigDecimal.xml",
+        "lib/netstandard2.0/ExtendedNumerics.BigDecimal.dll",
+        "lib/netstandard2.0/ExtendedNumerics.BigDecimal.xml",
+        "lib/netstandard2.1/ExtendedNumerics.BigDecimal.dll",
+        "lib/netstandard2.1/ExtendedNumerics.BigDecimal.xml",
+        "real.png"
+      ]
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.7": {
+      "sha512": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw==",
+      "type": "package",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/10.0.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
+        "lib/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "microsoft.extensions.dependencyinjection.abstractions.10.0.7.nupkg.sha512",
+        "microsoft.extensions.dependencyinjection.abstractions.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "Microsoft.Extensions.Logging.Abstractions/10.0.7": {
+      "sha512": "tIEcQ2gvERrH2KiCjdsVcHGhXt9lIsuDStfOIeZWr7/fP8IXhGiYfx0/80PNI7WPO2IYuFtlZLSlnTS8+/Mchw==",
+      "type": "package",
+      "path": "microsoft.extensions.logging.abstractions/10.0.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "analyzers/dotnet/roslyn3.11/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn3.11/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn4.0/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn4.4/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "buildTransitive/net461/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/net462/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/net8.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/netcoreapp2.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "lib/net10.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net10.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net462/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net462/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net9.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "microsoft.extensions.logging.abstractions.10.0.7.nupkg.sha512",
+        "microsoft.extensions.logging.abstractions.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "NCalc.Core/6.3.2": {
+      "sha512": "qiafSDXLGQno5E5dnsxDQQcXPjaE4l38XN1nXvmvbS6phgmJQeUf05d5kIsaEv7D5cCj8olf3zp9TI9ihrMYHQ==",
+      "type": "package",
+      "path": "ncalc.core/6.3.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NCalc.png",
+        "README.md",
+        "lib/net10.0/NCalc.Core.dll",
+        "lib/net462/NCalc.Core.dll",
+        "lib/net8.0/NCalc.Core.dll",
+        "lib/netstandard2.0/NCalc.Core.dll",
+        "ncalc.core.6.3.2.nupkg.sha512",
+        "ncalc.core.nuspec"
+      ]
+    },
+    "NCalc.Domain/6.3.2": {
+      "sha512": "XY3ojhgAIQ5fPvz4lcxLuhjZEZVi16IYAWWiA7Q3kD7yQ3M0B6qJmxK8TETOK0ZtJsnHe0ZWvuYg8diO/sPtMw==",
+      "type": "package",
+      "path": "ncalc.domain/6.3.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NCalc.png",
+        "lib/net10.0/NCalc.Domain.dll",
+        "lib/net462/NCalc.Domain.dll",
+        "lib/net8.0/NCalc.Domain.dll",
+        "lib/netstandard2.0/NCalc.Domain.dll",
+        "ncalc.domain.6.3.2.nupkg.sha512",
+        "ncalc.domain.nuspec"
+      ]
+    },
+    "NCalc.Parser/6.3.2": {
+      "sha512": "O82elGarSsi8h3r2fQQsSNoaLYx+BcZl/GMuNHygDTsbgiLwRJWc+74k8xn4gc2CmFS9UEFjSVx/TuORUe93iw==",
+      "type": "package",
+      "path": "ncalc.parser/6.3.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NCalc.png",
+        "lib/net10.0/NCalc.Parser.dll",
+        "lib/net462/NCalc.Parser.dll",
+        "lib/net8.0/NCalc.Parser.dll",
+        "lib/netstandard2.0/NCalc.Parser.dll",
+        "ncalc.parser.6.3.2.nupkg.sha512",
+        "ncalc.parser.nuspec"
+      ]
+    },
+    "NCalcSync/6.3.2": {
+      "sha512": "FhYFjMCQE84fpXtKf4X9Clv8twC0VsPVI/7P5715pzxmv21Yfkimyw8IaA5Uq2tYcSdC8eMVl+8c1EFrx1cumg==",
+      "type": "package",
+      "path": "ncalcsync/6.3.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NCalc.png",
+        "README.md",
+        "lib/net10.0/NCalc.Sync.dll",
+        "lib/net462/NCalc.Sync.dll",
+        "lib/net8.0/NCalc.Sync.dll",
+        "lib/netstandard2.0/NCalc.Sync.dll",
+        "ncalcsync.6.3.2.nupkg.sha512",
+        "ncalcsync.nuspec"
+      ]
+    },
+    "Parlot/1.5.7": {
+      "sha512": "D0PhSypMx1JJVTQUqB8ebwcJxH4NAvdn1d8eKi9lLoNz8c1+8qHw+/Sq5/6HaJFgOaqy1VJBpvYFCIC4I2uvqQ==",
+      "type": "package",
+      "path": "parlot/1.5.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "buildTransitive/Parlot.props",
+        "lib/net10.0/Parlot.dll",
+        "lib/net10.0/Parlot.xml",
+        "lib/net472/Parlot.dll",
+        "lib/net472/Parlot.xml",
+        "lib/net8.0/Parlot.dll",
+        "lib/net8.0/Parlot.xml",
+        "lib/netstandard2.0/Parlot.dll",
+        "lib/netstandard2.0/Parlot.xml",
+        "parlot.1.5.7.nupkg.sha512",
+        "parlot.nuspec"
+      ]
+    },
+    "System.Collections.Immutable/10.0.9": {
+      "sha512": "ci6tokGOzXpemLiZeMrSlA8xKdU43cIO0spbHH+vLaoFMA+fI8CHI3Np3D78jC7EZZrC9jiHDj0VlVK962hzsw==",
+      "type": "package",
+      "path": "system.collections.immutable/10.0.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Collections.Immutable.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Collections.Immutable.targets",
+        "lib/net10.0/System.Collections.Immutable.dll",
+        "lib/net10.0/System.Collections.Immutable.xml",
+        "lib/net462/System.Collections.Immutable.dll",
+        "lib/net462/System.Collections.Immutable.xml",
+        "lib/net8.0/System.Collections.Immutable.dll",
+        "lib/net8.0/System.Collections.Immutable.xml",
+        "lib/net9.0/System.Collections.Immutable.dll",
+        "lib/net9.0/System.Collections.Immutable.xml",
+        "lib/netstandard2.0/System.Collections.Immutable.dll",
+        "lib/netstandard2.0/System.Collections.Immutable.xml",
+        "system.collections.immutable.10.0.9.nupkg.sha512",
+        "system.collections.immutable.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "System.Diagnostics.DiagnosticSource/10.0.7": {
+      "sha512": "Fu6AxFf9bHz/Q7DQmxKC0o+UgFes8bs2Xh+PH/x31yExRAOASTwlzjZsISTtqVU5gQshKHLZopxEBTaIyfv0wg==",
+      "type": "package",
+      "path": "system.diagnostics.diagnosticsource/10.0.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Diagnostics.DiagnosticSource.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Diagnostics.DiagnosticSource.targets",
+        "lib/net10.0/System.Diagnostics.DiagnosticSource.dll",
+        "lib/net10.0/System.Diagnostics.DiagnosticSource.xml",
+        "lib/net462/System.Diagnostics.DiagnosticSource.dll",
+        "lib/net462/System.Diagnostics.DiagnosticSource.xml",
+        "lib/net8.0/System.Diagnostics.DiagnosticSource.dll",
+        "lib/net8.0/System.Diagnostics.DiagnosticSource.xml",
+        "lib/net9.0/System.Diagnostics.DiagnosticSource.dll",
+        "lib/net9.0/System.Diagnostics.DiagnosticSource.xml",
+        "lib/netstandard2.0/System.Diagnostics.DiagnosticSource.dll",
+        "lib/netstandard2.0/System.Diagnostics.DiagnosticSource.xml",
+        "system.diagnostics.diagnosticsource.10.0.7.nupkg.sha512",
+        "system.diagnostics.diagnosticsource.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "System.Reflection.Metadata/10.0.9": {
+      "sha512": "RDMS79w3l00LkkvmOxmeF8rrISmPNCR2Xs/0gun8IAyuEP+ktS9D/jue1dpVHDaqIVXpC/QQFEvE8PpmkhOrEQ==",
+      "type": "package",
+      "path": "system.reflection.metadata/10.0.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Reflection.Metadata.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Reflection.Metadata.targets",
+        "lib/net10.0/System.Reflection.Metadata.dll",
+        "lib/net10.0/System.Reflection.Metadata.xml",
+        "lib/net462/System.Reflection.Metadata.dll",
+        "lib/net462/System.Reflection.Metadata.xml",
+        "lib/net8.0/System.Reflection.Metadata.dll",
+        "lib/net8.0/System.Reflection.Metadata.xml",
+        "lib/net9.0/System.Reflection.Metadata.dll",
+        "lib/net9.0/System.Reflection.Metadata.xml",
+        "lib/netstandard2.0/System.Reflection.Metadata.dll",
+        "lib/netstandard2.0/System.Reflection.Metadata.xml",
+        "system.reflection.metadata.10.0.9.nupkg.sha512",
+        "system.reflection.metadata.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "System.Reflection.MetadataLoadContext/10.0.9": {
+      "sha512": "R/Zuc7ZM2rKeBM/b1Y9oS+WaRGgqw64maJiULAx4JlGL4eYZEXti3CxGq+dlthfGRx4UP1ie8T7T9n8MD3hKQw==",
+      "type": "package",
+      "path": "system.reflection.metadataloadcontext/10.0.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Reflection.MetadataLoadContext.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Reflection.MetadataLoadContext.targets",
+        "lib/net10.0/System.Reflection.MetadataLoadContext.dll",
+        "lib/net10.0/System.Reflection.MetadataLoadContext.xml",
+        "lib/net462/System.Reflection.MetadataLoadContext.dll",
+        "lib/net462/System.Reflection.MetadataLoadContext.xml",
+        "lib/net8.0/System.Reflection.MetadataLoadContext.dll",
+        "lib/net8.0/System.Reflection.MetadataLoadContext.xml",
+        "lib/net9.0/System.Reflection.MetadataLoadContext.dll",
+        "lib/net9.0/System.Reflection.MetadataLoadContext.xml",
+        "lib/netstandard2.0/System.Reflection.MetadataLoadContext.dll",
+        "lib/netstandard2.0/System.Reflection.MetadataLoadContext.xml",
+        "system.reflection.metadataloadcontext.10.0.9.nupkg.sha512",
+        "system.reflection.metadataloadcontext.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "NCalcSync >= 6.3.2",
+      "System.Reflection.MetadataLoadContext >= 10.0.9"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "D:\\alterone\\.ncalc-inspect\\DumpTypes\\DumpTypes.csproj",
+      "projectName": "DumpTypes",
+      "projectPath": "D:\\alterone\\.ncalc-inspect\\DumpTypes\\DumpTypes.csproj",
+      "packagesPath": "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget",
+      "outputPath": "D:\\alterone\\.ncalc-inspect\\DumpTypes\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\murat\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.100"
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "NCalcSync": {
+            "target": "Package",
+            "version": "[6.3.2, )"
+          },
+          "System.Reflection.MetadataLoadContext": {
+            "target": "Package",
+            "version": "[10.0.9, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

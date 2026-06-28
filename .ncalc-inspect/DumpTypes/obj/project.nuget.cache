@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "mKEYiYEEMuQ=",
+  "success": true,
+  "projectFilePath": "D:\\alterone\\.ncalc-inspect\\DumpTypes\\DumpTypes.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\extendednumerics.bigdecimal\\3003.0.0.346\\extendednumerics.bigdecimal.3003.0.0.346.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\microsoft.extensions.dependencyinjection.abstractions\\10.0.7\\microsoft.extensions.dependencyinjection.abstractions.10.0.7.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\microsoft.extensions.logging.abstractions\\10.0.7\\microsoft.extensions.logging.abstractions.10.0.7.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\ncalc.core\\6.3.2\\ncalc.core.6.3.2.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\ncalc.domain\\6.3.2\\ncalc.domain.6.3.2.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\ncalc.parser\\6.3.2\\ncalc.parser.6.3.2.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\ncalcsync\\6.3.2\\ncalcsync.6.3.2.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\parlot\\1.5.7\\parlot.1.5.7.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\system.collections.immutable\\10.0.9\\system.collections.immutable.10.0.9.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\system.diagnostics.diagnosticsource\\10.0.7\\system.diagnostics.diagnosticsource.10.0.7.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\system.reflection.metadata\\10.0.9\\system.reflection.metadata.10.0.9.nupkg.sha512",
+    "C:\\Users\\murat\\AppData\\Local\\Temp\\cursor-sandbox-cache\\76f1398b63ec94f0998c3b904b8f6f76\\nuget\\system.reflection.metadataloadcontext\\10.0.9\\system.reflection.metadataloadcontext.10.0.9.nupkg.sha512"
+  ],
+  "logs": []
+}
