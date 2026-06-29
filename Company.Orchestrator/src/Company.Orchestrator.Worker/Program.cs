@@ -3,6 +3,7 @@ using Company.Orchestrator.Application.Common.Interfaces;
 using Company.Orchestrator.Application.Services;
 using Company.Orchestrator.Infrastructure;
 using Company.Orchestrator.Infrastructure.Audit;
+using Company.Orchestrator.Infrastructure.Monitoring;
 using Company.Orchestrator.Infrastructure.Persistence;
 using Company.Orchestrator.Infrastructure.Security;
 using Company.Orchestrator.Worker;
@@ -37,6 +38,13 @@ try
 
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
+
+    var monitoringApiBaseUrl = builder.Configuration["InstanceMonitoring:ApiBaseUrl"];
+    if (!string.IsNullOrWhiteSpace(monitoringApiBaseUrl))
+    {
+        builder.Services.AddHttpClient<IInstanceMonitoringPublisher, HttpInstanceMonitoringPublisher>();
+    }
+
     builder.Services.AddScoped<Company.Orchestrator.Application.Common.Interfaces.ICurrentUser, WorkerCurrentUser>();
     builder.Services.AddScoped<IAuditService, AuditService>();
 

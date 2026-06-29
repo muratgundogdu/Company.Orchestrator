@@ -1,6 +1,7 @@
 using Company.Orchestrator.Application.Capabilities.Folder;
 using Company.Orchestrator.Application.Common.Interfaces;
 using Company.Orchestrator.Application.Models;
+using Company.Orchestrator.Infrastructure.Capabilities.Folder;
 using Microsoft.Extensions.Logging;
 
 namespace Company.Orchestrator.Infrastructure.StepHandlers;
@@ -11,8 +12,9 @@ namespace Company.Orchestrator.Infrastructure.StepHandlers;
 ///
 /// Config keys:
 ///   artifactName      (required) — name of the artifact in WorkflowContext.Artifacts to write
-///   destinationPath   (required) — target file path (absolute or UNC),
-///                                  supports {{variable}} interpolation
+///   destinationPath   (required) — target file path or directory (absolute or UNC).
+///                                  When a directory, the artifact's file name is appended.
+///                                  Supports {{variable}} interpolation
 ///   overwrite         (optional) — "true" to overwrite an existing file (default: "false")
 ///
 /// Output variables:
@@ -66,20 +68,26 @@ public sealed class FolderWriteFileStepHandler : IStepHandler
                 $"FolderWriteFile: artifact '{artifactName}' not found in context.");
 
         var artifact = context.GetArtifact(artifactName);
+        var resolvedDestPath = FolderWriteDestinationPathResolver.Resolve(destPath, artifact.Name);
+
+        if (!string.Equals(destPath, resolvedDestPath, StringComparison.Ordinal))
+            _logger.LogInformation(
+                "FolderWriteFile: resolved file path: '{Raw}' -> '{Resolved}'",
+                destPath, resolvedDestPath);
 
         _logger.LogInformation(
             "FolderWriteFile: writing artifact '{Name}' ({Bytes:N0} bytes) → '{Dest}' (overwrite={O})",
-            artifactName, artifact.SizeBytes, destPath, overwrite);
+            artifactName, artifact.SizeBytes, resolvedDestPath, overwrite);
 
         var folder = context.GetCapability<ISharedFolderCapability>();
-        await folder.WriteFileAsync(artifact, destPath, overwrite, cancellationToken);
+        await folder.WriteFileAsync(artifact, resolvedDestPath, overwrite, cancellationToken);
 
         return StepResult.Ok(
             output: new Dictionary<string, object>
             {
-                ["writtenPath"]      = destPath,
+                ["writtenPath"]      = resolvedDestPath,
                 ["writtenSizeBytes"] = artifact.SizeBytes
             },
-            outputData: $"Wrote {artifact.SizeBytes:N0} bytes → '{destPath}'");
+            outputData: $"Wrote {artifact.SizeBytes:N0} bytes → '{resolvedDestPath}'");
     }
 }

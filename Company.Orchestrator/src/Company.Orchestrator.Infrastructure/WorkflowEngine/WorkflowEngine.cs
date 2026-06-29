@@ -31,6 +31,7 @@ public class WorkflowEngine : IWorkflowEngine
     private readonly IArtifactRepository _artifactRepository;
     private readonly IArtifactStore _artifactStore;
     private readonly IAuditService _audit;
+    private readonly IInstanceMonitoringPublisher _monitoring;
     private readonly ILogger<WorkflowEngine> _logger;
 
     public WorkflowEngine(
@@ -40,6 +41,7 @@ public class WorkflowEngine : IWorkflowEngine
         IArtifactRepository artifactRepository,
         IArtifactStore artifactStore,
         IAuditService audit,
+        IInstanceMonitoringPublisher monitoring,
         ILogger<WorkflowEngine> logger)
     {
         _context = context;
@@ -48,6 +50,7 @@ public class WorkflowEngine : IWorkflowEngine
         _artifactRepository = artifactRepository;
         _artifactStore = artifactStore;
         _audit = audit;
+        _monitoring = monitoring;
         _logger = logger;
     }
 
@@ -351,6 +354,7 @@ public class WorkflowEngine : IWorkflowEngine
 
         await AddJobLogAsync(job.Id, null, "Information", "Workflow cancelled", cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
+        await PublishInstanceCompletedAsync(instance, ProcessStatus.Cancelled, cancellationToken);
 
         _logger.LogInformation("Job {JobId} cancelled cooperatively: {Message}", job.Id, message);
     }
@@ -398,6 +402,7 @@ public class WorkflowEngine : IWorkflowEngine
         stepInstance.Status = StepStatus.Running;
         stepInstance.StartedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
+        await PublishStepStartedAsync(stepInstance, cancellationToken);
 
         await AddJobLogAsync(job.Id, stepInstance.Id, "Information",
             $"Starting step '{stepDef.Name}' ({stepDef.Type})", cancellationToken);
@@ -544,6 +549,54 @@ public class WorkflowEngine : IWorkflowEngine
         step.DurationMs    = durationMs;
         if (attemptNumber.HasValue) step.AttemptNumber = attemptNumber.Value;
         await _context.SaveChangesAsync(cancellationToken);
+        await PublishStepStatusAsync(step, cancellationToken);
+    }
+
+    private async Task PublishStepStartedAsync(ProcessStepInstance step, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _monitoring.PublishStepStartedAsync(step, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to publish step started event for {StepId}", step.Id);
+        }
+    }
+
+    private async Task PublishStepStatusAsync(ProcessStepInstance step, CancellationToken cancellationToken)
+    {
+        try
+        {
+            switch (step.Status)
+            {
+                case StepStatus.Success:
+                    await _monitoring.PublishStepCompletedAsync(step, cancellationToken);
+                    break;
+                case StepStatus.Failed:
+                    await _monitoring.PublishStepFailedAsync(step, cancellationToken);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to publish step status event for {StepId}", step.Id);
+        }
+    }
+
+    private async Task PublishInstanceCompletedAsync(
+        ProcessInstance instance,
+        ProcessStatus status,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _monitoring.PublishInstanceCompletedAsync(instance, status, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to publish instance completed event for {InstanceId}", instance.Id);
+        }
     }
 
     private async Task AddJobLogAsync(
@@ -579,6 +632,7 @@ public class WorkflowEngine : IWorkflowEngine
 
         await AddJobLogAsync(job.Id, null, "Information", "Workflow completed successfully", cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
+        await PublishInstanceCompletedAsync(instance, ProcessStatus.Success, cancellationToken);
         _logger.LogInformation("Job {JobId} completed successfully", job.Id);
 
         await _audit.WriteSuccessAsync(new AuditWriteRequest
@@ -639,6 +693,9 @@ public class WorkflowEngine : IWorkflowEngine
 
         await AddJobLogAsync(job.Id, null, "Error", error, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (!shouldRetry)
+            await PublishInstanceCompletedAsync(instance, ProcessStatus.Failed, cancellationToken);
     }
 
     // ------------------------------------------------------------------ //

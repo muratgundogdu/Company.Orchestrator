@@ -57,6 +57,7 @@ import {
   getRFNodeType,
   parseWorkflowDefinition,
 } from './utils';
+import { applyAutoBindToNodes } from './artifactBinding';
 import type { WorkflowNodeData } from './types';
 import { VersionStatus } from '../../api/types';
 import type { TriggerDto } from '../../api/types';
@@ -69,26 +70,26 @@ import type { AvailableVariable } from './types';
 // is set. They appear in the variable picker so users can reference them without
 // having to remember the exact names.
 const SYSTEM_ERROR_VARIABLES: AvailableVariable[] = [
-  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', insertValue: '{{errorMessage}}',              label: 'errorMessage',              description: 'Error message from the failed step',                             kind: 'variable' },
-  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', insertValue: '{{failedStepId}}',              label: 'failedStepId',              description: 'ID of the step that failed',                                     kind: 'variable' },
-  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', insertValue: '{{failedStepName}}',            label: 'failedStepName',            description: 'Name of the step that failed',                                   kind: 'variable' },
-  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', insertValue: '{{failedStepType}}',            label: 'failedStepType',            description: 'Type of the step that failed',                                   kind: 'variable' },
-  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', insertValue: '{{failureReportArtifactName}}', label: 'failureReportArtifactName', description: 'Name of the auto-generated failure report artifact (text/plain)', kind: 'artifact' },
+  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', sourceStepType: 'system', insertValue: '{{errorMessage}}',              label: 'errorMessage',              description: 'Error message from the failed step',                             kind: 'variable' },
+  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', sourceStepType: 'system', insertValue: '{{failedStepId}}',              label: 'failedStepId',              description: 'ID of the step that failed',                                     kind: 'variable' },
+  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', sourceStepType: 'system', insertValue: '{{failedStepName}}',            label: 'failedStepName',            description: 'Name of the step that failed',                                   kind: 'variable' },
+  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', sourceStepType: 'system', insertValue: '{{failedStepType}}',            label: 'failedStepType',            description: 'Type of the step that failed',                                   kind: 'variable' },
+  { sourceNodeId: '__system__', sourceNodeName: 'System — Error Context', sourceStepType: 'system', insertValue: '{{failureReportArtifactName}}', label: 'failureReportArtifactName', description: 'Name of the auto-generated failure report artifact (text/plain)', kind: 'artifact' },
 ];
 
 /** Generic loop-context variables shown when a foreach.loop is upstream. */
 const SYSTEM_LOOP_VARIABLES: AvailableVariable[] = [
-  { sourceNodeId: '__loop__', sourceNodeName: 'Loop Context', insertValue: '{{currentItem}}',  label: 'currentItem',  description: 'Current item value in the For Each loop',        kind: 'variable' },
-  { sourceNodeId: '__loop__', sourceNodeName: 'Loop Context', insertValue: '{{currentIndex}}', label: 'currentIndex', description: 'Zero-based index of the current loop iteration',  kind: 'variable' },
+  { sourceNodeId: '__loop__', sourceNodeName: 'Loop Context', sourceStepType: 'foreach.loop', insertValue: '{{currentItem}}',  label: 'currentItem',  description: 'Current item value in the For Each loop',        kind: 'variable' },
+  { sourceNodeId: '__loop__', sourceNodeName: 'Loop Context', sourceStepType: 'foreach.loop', insertValue: '{{currentIndex}}', label: 'currentIndex', description: 'Zero-based index of the current loop iteration',  kind: 'variable' },
 ];
 
 /** Injected when a workflow is started by a FolderWatcher trigger. */
 const FOLDER_WATCHER_TRIGGER_VARIABLES: AvailableVariable[] = [
-  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', insertValue: '{{triggerFilePath}}',         label: 'triggerFilePath',         description: 'Full path to the file (processing folder when move-to-processing is enabled)', kind: 'variable' },
-  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', insertValue: '{{triggerProcessingPath}}',   label: 'triggerProcessingPath',   description: 'Same as triggerFilePath — path after move to processing folder',             kind: 'variable' },
-  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', insertValue: '{{triggerOriginalFilePath}}', label: 'triggerOriginalFilePath', description: 'Original full path before move to processing folder',                          kind: 'variable' },
-  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', insertValue: '{{triggerFileName}}',         label: 'triggerFileName',         description: 'File name only (e.g. data.xlsx)',                                              kind: 'variable' },
-  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', insertValue: '{{triggerDirectory}}',        label: 'triggerDirectory',        description: 'Original directory containing the detected file',                                kind: 'variable' },
+  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', sourceStepType: 'trigger.folder-watcher', insertValue: '{{triggerFilePath}}',         label: 'triggerFilePath',         description: 'Full path to the file (processing folder when move-to-processing is enabled)', kind: 'variable' },
+  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', sourceStepType: 'trigger.folder-watcher', insertValue: '{{triggerProcessingPath}}',   label: 'triggerProcessingPath',   description: 'Same as triggerFilePath — path after move to processing folder',             kind: 'variable' },
+  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', sourceStepType: 'trigger.folder-watcher', insertValue: '{{triggerOriginalFilePath}}', label: 'triggerOriginalFilePath', description: 'Original full path before move to processing folder',                          kind: 'variable' },
+  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', sourceStepType: 'trigger.folder-watcher', insertValue: '{{triggerFileName}}',         label: 'triggerFileName',         description: 'File name only (e.g. data.xlsx)',                                              kind: 'variable' },
+  { sourceNodeId: '__trigger__', sourceNodeName: 'FolderWatcher Trigger', sourceStepType: 'trigger.folder-watcher', insertValue: '{{triggerDirectory}}',        label: 'triggerDirectory',        description: 'Original directory containing the detected file',                                kind: 'variable' },
 ];
 
 const nodeTypes: NodeTypes = {
@@ -150,6 +151,10 @@ export default function WorkflowDesigner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+  const nodesRef = useRef<Node<WorkflowNodeData>[]>([]);
+  const edgesRef = useRef<Edge[]>([]);
+  const manualArtifactFieldsRef = useRef(new Map<string, Set<string>>());
+  const awaitingAutoBindRef = useRef(new Set<string>());
 
   // ── Workflow metadata ────────────────────────────────────────────────────────
   const [workflowName, setWorkflowName]       = useState('my-workflow');
@@ -219,6 +224,43 @@ export default function WorkflowDesigner() {
     errors:   validationResult.errors.filter(e => e.nodeId === selectedNodeId),
     warnings: validationResult.warnings.filter(w => w.nodeId === selectedNodeId),
   }), [validationResult, selectedNodeId]);
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
+  const markArtifactFieldManual = useCallback((nodeId: string, field: string) => {
+    const fields = manualArtifactFieldsRef.current.get(nodeId) ?? new Set<string>();
+    fields.add(field);
+    manualArtifactFieldsRef.current.set(nodeId, fields);
+    awaitingAutoBindRef.current.delete(nodeId);
+  }, []);
+
+  const runAutoBindForNodes = useCallback((
+    currentNodes: Node<WorkflowNodeData>[],
+    currentEdges: Edge[],
+    targetNodeIds: Iterable<string>,
+  ): Node<WorkflowNodeData>[] => {
+    const { nodes: bound, awaiting } = applyAutoBindToNodes(
+      currentNodes,
+      currentEdges,
+      targetNodeIds,
+      manualArtifactFieldsRef.current,
+    );
+
+    for (const id of awaiting) awaitingAutoBindRef.current.add(id);
+
+    for (const node of bound) {
+      const original = currentNodes.find((n) => n.id === node.id);
+      if (!original) continue;
+      if (JSON.stringify(original.data.config) !== JSON.stringify(node.data.config)) {
+        awaitingAutoBindRef.current.delete(node.id);
+      }
+    }
+
+    return bound;
+  }, []);
 
   // ── Modal state ───────────────────────────────────────────────────────────────
   const [showSave, setShowSave]         = useState(false);
@@ -382,8 +424,8 @@ export default function WorkflowDesigner() {
       const isCompleted = params.sourceHandle === 'completed';
       const isLoopBack  = params.targetHandle === 'loop-back';
 
-      setEdges((eds) =>
-        addEdge(
+      setEdges((eds) => {
+        const nextEdges = addEdge(
           {
             ...params,
             type: 'smoothstep',
@@ -397,12 +439,20 @@ export default function WorkflowDesigner() {
             ...(isLoopBack  ? { label: '↵ back',    style: { stroke: '#64748b', strokeDasharray: '5,4' }, labelStyle: { fill: '#64748b', fontWeight: 700, fontSize: 10 }, labelBgStyle: { fill: 'white', fillOpacity: 0.85 } } : {}),
           },
           eds,
-        ),
-      );
+        );
+
+        edgesRef.current = nextEdges;
+
+        if (params.target && awaitingAutoBindRef.current.has(params.target)) {
+          setNodes((nds) => runAutoBindForNodes(nds, nextEdges, [params.target!]));
+        }
+
+        return nextEdges;
+      });
       markDirty();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setEdges, currentDefinitionId],
+    [setEdges, currentDefinitionId, runAutoBindForNodes],
   );
 
   // ── Selection change ─────────────────────────────────────────────────────────
@@ -436,12 +486,13 @@ export default function WorkflowDesigner() {
         data: { name: def.label, stepType, config: { ...def.defaultConfig } },
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      awaitingAutoBindRef.current.add(id);
+      setNodes((nds) => runAutoBindForNodes(nds.concat(newNode), edgesRef.current, [id]));
       setSelectedNodeId(id);
       markDirty();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rfInstance, setNodes, currentDefinitionId],
+    [rfInstance, setNodes, currentDefinitionId, runAutoBindForNodes],
   );
 
   // ── Update selected node data ─────────────────────────────────────────────────
@@ -470,6 +521,8 @@ export default function WorkflowDesigner() {
     setNodes([]);
     setEdges([]);
     setSelectedNodeId(null);
+    manualArtifactFieldsRef.current.clear();
+    awaitingAutoBindRef.current.clear();
     setCurrentDefinitionId(null);
     setCurrentVersionId(null);
     setCurrentVersionNumber(null);
@@ -781,6 +834,7 @@ export default function WorkflowDesigner() {
             availableVariables={availableVariables}
             onUpdate={updateSelectedNode}
             onDelete={deleteSelectedNode}
+            onMarkArtifactFieldManual={markArtifactFieldManual}
             validationErrors={selectedNodeValidation.errors}
             validationWarnings={selectedNodeValidation.warnings}
           />

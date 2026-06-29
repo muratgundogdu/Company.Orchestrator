@@ -111,6 +111,11 @@ public sealed class SharedFolderCapabilityImpl : ISharedFolderCapability
             "SharedFolderCapability: writing artifact {Id} → '{Dest}' (overwrite={O})",
             artifact.Id, destinationPath, overwrite);
 
+        if (FolderWriteDestinationPathResolver.IsDirectoryPath(destinationPath))
+            throw new ArgumentException(
+                $"SharedFolderCapability: destination path is a directory, not a file: '{destinationPath}'",
+                nameof(destinationPath));
+
         if (!overwrite && System.IO.File.Exists(destinationPath))
             throw new IOException(
                 $"SharedFolderCapability: destination already exists and overwrite=false: '{destinationPath}'");

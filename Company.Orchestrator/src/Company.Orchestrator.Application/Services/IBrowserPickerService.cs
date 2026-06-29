@@ -37,6 +37,12 @@ public sealed class BrowserPickerSelectedResult
 public sealed class BrowserPickerCandidate
 {
     public string Selector { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Selector engine / healing category: css, xpath, dom-path, table-relative, attribute, text.
+    /// </summary>
+    public string Type { get; init; } = "css";
+
     public string Strategy { get; init; } = string.Empty;
     public string Confidence { get; init; } = "low";
     public int MatchCount { get; init; }

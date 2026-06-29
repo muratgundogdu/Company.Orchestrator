@@ -321,7 +321,9 @@ public sealed class MailCapabilityImpl : IMailCapability
                     From                = fromAddr,
                     ReceivedAt          = receivedAt == DateTime.MinValue ? null : receivedAt,
                     Folder              = query.Folder,
-                    AttachmentFileNames = attachmentParts.Select(p => p.FileName ?? "attachment").ToList()
+                    AttachmentFileNames = attachmentParts
+                        .Select(MailAttachmentArtifactNames.ResolveOriginalFileName)
+                        .ToList()
                 };
 
                 var artifacts           = new List<ArtifactReference>();
@@ -347,7 +349,7 @@ public sealed class MailCapabilityImpl : IMailCapability
                         break;
                     }
 
-                    var fileName = part.FileName ?? "attachment";
+                    var fileName = MailAttachmentArtifactNames.ResolveOriginalFileName(part);
                     if (!AttachmentMatchesFilters(fileName, query, out var skipReason))
                     {
                         _logger.LogInformation(
@@ -363,9 +365,8 @@ public sealed class MailCapabilityImpl : IMailCapability
 
                     var contentType  = part.ContentType.MimeType;
                     var artifactId   = Guid.NewGuid();
-                    var artifactName = string.IsNullOrEmpty(artifactPrefix)
-                        ? SanitizeFileName(fileName)
-                        : $"{artifactPrefix}_{SanitizeFileName(fileName)}";
+                    var artifactName = MailAttachmentArtifactNames.BuildArtifactName(
+                        fileName, artifactPrefix, contentType);
 
                     using var ms = new MemoryStream();
                     await part.Content!.DecodeToAsync(ms, ct);
@@ -1198,7 +1199,7 @@ public sealed class MailCapabilityImpl : IMailCapability
 
     private static string SanitizeFileName(string name)
     {
-        foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+        foreach (var c in Path.GetInvalidFileNameChars())
             name = name.Replace(c, '_');
         return name.Length > 100 ? name[..100] : name;
     }

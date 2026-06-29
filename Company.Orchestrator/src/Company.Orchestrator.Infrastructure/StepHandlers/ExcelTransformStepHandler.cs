@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Company.Orchestrator.Application.Artifacts;
+using Company.Orchestrator.Infrastructure.ExcelTransform;
 using Company.Orchestrator.Application.Common.Interfaces;
 using Company.Orchestrator.Application.Models;
 using Microsoft.Extensions.Logging;
@@ -146,7 +147,7 @@ public sealed class ExcelTransformStepHandler : IStepHandler
                 if (opTypeLower == "importtexttosheet")
                     await ApplyImportTextToSheetAsync(wb, op, context, cancellationToken);
                 else
-                    ApplyOperation(wb, op);
+                    ApplyOperation(wb, op, context);
                 _logger.LogInformation(
                     "excel.transform: [{Index}/{Total}] '{Type}' completed",
                     i + 1, operations.Count, opType);
@@ -216,7 +217,7 @@ public sealed class ExcelTransformStepHandler : IStepHandler
     // Dispatch
     // ══════════════════════════════════════════════════════════════════════
 
-    private void ApplyOperation(XLWorkbook wb, Dictionary<string, string?> op)
+    private void ApplyOperation(XLWorkbook wb, Dictionary<string, string?> op, WorkflowContext context)
     {
         switch ((op.GetValueOrDefault("type") ?? "").ToLowerInvariant())
         {
@@ -247,7 +248,7 @@ public sealed class ExcelTransformStepHandler : IStepHandler
             case "autofitcolumns":     ApplyAutoFitColumns(wb, op);     break;
             case "createsheetfromcolumns": ApplyCreateSheetFromColumns(wb, op); break;
             case "setcellstyle":       ApplySetCellStyle(wb, op);       break;
-            case "transformcolumn":    ApplyTransformColumn(wb, op);    break;
+            case "transformcolumn":    ApplyTransformColumn(wb, op, context);    break;
             case "copycolumnvalues":   ApplyCopyColumnValues(wb, op);   break;
             case "replacecolumnvalues": ApplyReplaceColumnValues(wb, op); break;
             case "calculateformulavalues": ApplyCalculateFormulaValues(wb, op); break;
@@ -1401,7 +1402,7 @@ public sealed class ExcelTransformStepHandler : IStepHandler
     // Phase 20 — column transform / expression operations
     // ══════════════════════════════════════════════════════════════════════
 
-    private static void ApplyTransformColumn(XLWorkbook wb, Dictionary<string, string?> op)
+    private static void ApplyTransformColumn(XLWorkbook wb, Dictionary<string, string?> op, WorkflowContext context)
     {
         var ws         = FindSheet(wb, Require(op, "sheetName"));
         var srcCol     = ParseColRef(Require(op, "sourceColumn"));
@@ -1411,14 +1412,24 @@ public sealed class ExcelTransformStepHandler : IStepHandler
         var header     = op.GetValueOrDefault("targetHeader");
         var format     = op.GetValueOrDefault("numberFormat");
         var lastRow    = ws.LastRowUsed()?.RowNumber() ?? startRow;
+        var lastCol    = ws.LastColumnUsed()?.ColumnNumber() ?? Math.Max(srcCol, tgtCol);
+        var headerRow  = startRow > 1 ? 1 : 0;
+        var variables  = ExcelTransformRowDictionaryBuilder.BuildVariables(context.Variables);
 
         if (!string.IsNullOrEmpty(header))
             ws.Cell(1, tgtCol).Value = header;
 
         for (var r = startRow; r <= lastRow; r++)
         {
-            var input  = GetCellValueAsString(ws.Cell(r, srcCol));
-            var result = ColumnExpressionEvaluator.Evaluate(expression, input);
+            var rowDict = ExcelTransformRowDictionaryBuilder.Build(ws, r, headerRow, lastCol);
+            var input   = GetCellValueAsString(ws.Cell(r, srcCol));
+            var evalCtx = new ExcelTransformExpressionContext
+            {
+                Value     = input,
+                Row       = rowDict,
+                Variables = variables,
+            };
+            var result = ExcelTransformColumnExpressionEvaluator.Evaluate(expression, evalCtx);
             WriteExpressionResult(ws.Cell(r, tgtCol), result, format);
         }
     }
@@ -1831,189 +1842,6 @@ public sealed class ExcelTransformStepHandler : IStepHandler
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to parse '{key}': {ex.Message}");
-        }
-    }
-
-    private static class ColumnExpressionEvaluator
-    {
-        private static readonly Regex FunctionCallRegex =
-            new(@"(\w+)\(([^()]*)\)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
-        public static object Evaluate(string expression, string rawValue)
-        {
-            var expr = expression.Trim();
-            if (string.IsNullOrEmpty(expr))
-                throw new InvalidOperationException("Expression must not be empty.");
-
-            while (true)
-            {
-                Match? innermost = null;
-                foreach (Match match in FunctionCallRegex.Matches(expr))
-                {
-                    if (innermost is null || match.Groups[2].Length < innermost.Groups[2].Length)
-                        innermost = match;
-                }
-
-                if (innermost is null)
-                    break;
-
-                var fnName = innermost.Groups[1].Value;
-                var args   = innermost.Groups[2].Value;
-                var result = InvokeFunction(fnName, args, rawValue);
-                expr = expr[..innermost.Index]
-                     + FormatIntermediate(result)
-                     + expr[(innermost.Index + innermost.Length)..];
-            }
-
-            return EvaluateFinalExpression(expr.Trim(), rawValue);
-        }
-
-        private static object InvokeFunction(string name, string argsRaw, string rawValue)
-        {
-            var args = SplitFunctionArgs(argsRaw);
-            return name.ToLowerInvariant() switch
-            {
-                "tonumber" => ToNumber(ResolveArg(args, 0, rawValue)),
-                "totext"   => ToText(ResolveArg(args, 0, rawValue)),
-                "trim"     => Trim(ResolveArg(args, 0, rawValue)),
-                "removeleadingzeros" => RemoveLeadingZeros(ResolveArg(args, 0, rawValue)),
-                "divide"   => ToNumber(ResolveArg(args, 0, rawValue))
-                              / ParseNumericArg(ResolveArg(args, 1, rawValue), "divide"),
-                "multiply" => ToNumber(ResolveArg(args, 0, rawValue))
-                              * ParseNumericArg(ResolveArg(args, 1, rawValue), "multiply"),
-                "add"      => ToNumber(ResolveArg(args, 0, rawValue))
-                              + ParseNumericArg(ResolveArg(args, 1, rawValue), "add"),
-                "subtract" => ToNumber(ResolveArg(args, 0, rawValue))
-                              - ParseNumericArg(ResolveArg(args, 1, rawValue), "subtract"),
-                _ => throw new InvalidOperationException($"Unsupported expression function '{name}'.")
-            };
-        }
-
-        private static string ResolveArg(string[] args, int index, string rawValue)
-        {
-            if (args.Length <= index)
-                throw new InvalidOperationException($"Function expected argument {index + 1}.");
-
-            var arg = args[index].Trim();
-            if (string.Equals(arg, "value", StringComparison.OrdinalIgnoreCase))
-                return rawValue;
-            return arg;
-        }
-
-        private static double ParseNumericArg(string arg, string fn)
-        {
-            if (double.TryParse(arg, NumberStyles.Any, CultureInfo.InvariantCulture, out var n))
-                return n;
-            if (double.TryParse(arg, NumberStyles.Any, CultureInfo.CurrentCulture, out n))
-                return n;
-            throw new InvalidOperationException($"'{fn}' second argument must be numeric, got '{arg}'.");
-        }
-
-        private static string[] SplitFunctionArgs(string args)
-        {
-            var parts   = new List<string>();
-            var current = new StringBuilder();
-            var depth   = 0;
-
-            foreach (var ch in args)
-            {
-                if (ch == '(') depth++;
-                else if (ch == ')') depth--;
-                else if (ch == ',' && depth == 0)
-                {
-                    parts.Add(current.ToString().Trim());
-                    current.Clear();
-                    continue;
-                }
-
-                current.Append(ch);
-            }
-
-            parts.Add(current.ToString().Trim());
-            return parts.ToArray();
-        }
-
-        private static double ToNumber(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s))
-                return 0;
-
-            if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var n))
-                return n;
-            if (double.TryParse(s, NumberStyles.Any, CultureInfo.CurrentCulture, out n))
-                return n;
-
-            var trimmed = s.Trim();
-            if (trimmed.Length > 0 && trimmed.All(char.IsDigit))
-                return double.Parse(trimmed, CultureInfo.InvariantCulture);
-
-            throw new InvalidOperationException($"toNumber could not parse '{s}'.");
-        }
-
-        private static string ToText(string s) => s;
-
-        private static string Trim(string s) => s.Trim();
-
-        private static string RemoveLeadingZeros(string s)
-        {
-            var trimmed = s.Trim();
-            if (trimmed.Length == 0) return trimmed;
-
-            var negative = trimmed.StartsWith('-');
-            if (negative) trimmed = trimmed[1..];
-
-            var i = 0;
-            while (i < trimmed.Length - 1 && trimmed[i] == '0') i++;
-            var result = trimmed[i..];
-            return negative ? "-" + result : result;
-        }
-
-        private static string FormatIntermediate(object result) => result switch
-        {
-            double d => d.ToString(CultureInfo.InvariantCulture),
-            float f  => f.ToString(CultureInfo.InvariantCulture),
-            int i    => i.ToString(CultureInfo.InvariantCulture),
-            long l   => l.ToString(CultureInfo.InvariantCulture),
-            decimal m => m.ToString(CultureInfo.InvariantCulture),
-            _        => result.ToString() ?? string.Empty
-        };
-
-        private static object EvaluateFinalExpression(string expr, string rawValue)
-        {
-            if (string.IsNullOrEmpty(expr))
-                return rawValue;
-
-            if (string.Equals(expr, "value", StringComparison.OrdinalIgnoreCase))
-                return rawValue;
-
-            if (double.TryParse(expr, NumberStyles.Any, CultureInfo.InvariantCulture, out var direct))
-                return direct;
-
-            if (expr.IndexOfAny(['+', '-', '*', '/']) >= 0)
-            {
-                try
-                {
-                    var computed = new DataTable().Compute(expr, null);
-                    if (computed is null)
-                        throw new InvalidOperationException($"Expression '{expr}' did not produce a value.");
-                    return computed switch
-                    {
-                        double d  => d,
-                        decimal m => (double)m,
-                        int i     => (double)i,
-                        long l    => (double)l,
-                        float f   => (double)f,
-                        _         => Convert.ToDouble(computed, CultureInfo.InvariantCulture)
-                    };
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to evaluate expression '{expr}': {ex.Message}");
-                }
-            }
-
-            return expr;
         }
     }
 

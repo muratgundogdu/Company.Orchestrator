@@ -8,9 +8,22 @@ import Pagination from '../../components/Pagination';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
 import { fmtDate, fmtBytes, shortId } from '../../utils/format';
+import { downloadArtifact } from '../../utils/downloadArtifact';
 
 export default function ArtifactList() {
   const [page, setPage] = useState(1);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  async function handleDownload(id: string, name: string) {
+    setDownloadingId(id);
+    try {
+      await downloadArtifact(id, name);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Download failed');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   const { data, loading, error, refetch } = useApi(
     () => artifactApi.list(page, 20),
@@ -86,14 +99,15 @@ export default function ArtifactList() {
                     </td>
                     <td className="table-td text-gray-500">{fmtDate(a.createdAt)}</td>
                     <td className="table-td">
-                      <a
-                        href={a.downloadUrl}
-                        download={a.name}
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(a.id, a.name)}
+                        disabled={downloadingId === a.id}
                         className="btn btn-secondary btn-sm inline-flex items-center gap-1"
                       >
                         <Download size={12} />
-                        Download
-                      </a>
+                        {downloadingId === a.id ? 'Downloading…' : 'Download'}
+                      </button>
                     </td>
                   </tr>
                 ))}

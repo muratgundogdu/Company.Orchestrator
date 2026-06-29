@@ -270,8 +270,17 @@ export interface TriggerEventDto {
 
 export type BrowserPickerConfidence = 'high' | 'medium' | 'low';
 
+export type BrowserPickerCandidateType =
+  | 'css'
+  | 'xpath'
+  | 'dom-path'
+  | 'table-relative'
+  | 'attribute'
+  | 'text';
+
 export interface BrowserPickerCandidate {
   selector: string;
+  type: BrowserPickerCandidateType | string;
   strategy: string;
   confidence: BrowserPickerConfidence;
   matchCount: number;

@@ -7,13 +7,6 @@ namespace Company.Orchestrator.Infrastructure.BrowserPicker;
 
 internal static class BrowserPickerCandidateGenerator
 {
-    private static readonly Dictionary<string, int> ConfidenceRank = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["high"]   = 0,
-        ["medium"] = 1,
-        ["low"]    = 2,
-    };
-
     public static async Task<BrowserPickerSelectedResult> BuildAsync(IPage page, ILogger logger)
     {
         try
@@ -42,8 +35,10 @@ internal static class BrowserPickerCandidateGenerator
             {
                 var selector   = item.GetProperty("selector").GetString() ?? string.Empty;
                 var strategy   = item.GetProperty("strategy").GetString() ?? string.Empty;
-                var confidence = item.GetProperty("confidence").GetString() ?? "low";
                 var reason     = item.GetProperty("reason").GetString() ?? string.Empty;
+                var type       = item.TryGetProperty("type", out var typeProp)
+                    ? typeProp.GetString() ?? InferType(strategy, selector)
+                    : InferType(strategy, selector);
 
                 if (string.IsNullOrWhiteSpace(selector)) continue;
 
@@ -53,8 +48,9 @@ internal static class BrowserPickerCandidateGenerator
                 validated.Add(new BrowserPickerCandidate
                 {
                     Selector   = selector,
+                    Type       = type,
                     Strategy   = strategy,
-                    Confidence = confidence,
+                    Confidence = BrowserPickerConfidenceResolver.FromMatchCount(matchCount),
                     MatchCount = matchCount,
                     Reason     = reason,
                 });
@@ -65,7 +61,7 @@ internal static class BrowserPickerCandidateGenerator
                 .Select(g => g.First())
                 .ToList();
 
-            var primary = PickPrimary(validated);
+            var primary = BrowserPickerCandidateRanker.PickPrimary(validated);
 
             if (primary is not null)
             {
@@ -114,15 +110,20 @@ internal static class BrowserPickerCandidateGenerator
         }
     }
 
-    private static BrowserPickerCandidate? PickPrimary(IReadOnlyList<BrowserPickerCandidate> candidates)
+    private static string InferType(string strategy, string selector)
     {
-        if (candidates.Count == 0) return null;
-
-        return candidates
-            .OrderBy(c => ConfidenceRank.GetValueOrDefault(c.Confidence, 99))
-            .ThenBy(c => c.MatchCount == 1 ? 0 : 1)
-            .ThenBy(c => c.Selector.Length)
-            .First();
+        if (strategy.Equals("path", StringComparison.OrdinalIgnoreCase))
+            return "dom-path";
+        if (strategy.StartsWith("table-row", StringComparison.OrdinalIgnoreCase))
+            return "table-relative";
+        if (strategy.Contains("xpath", StringComparison.OrdinalIgnoreCase)
+            || selector.StartsWith("xpath=", StringComparison.OrdinalIgnoreCase))
+            return "xpath";
+        if (strategy is "data" or "id" or "name" or "aria" or "role")
+            return "attribute";
+        if (strategy is "text" or "parent-text" or "text-xpath")
+            return "text";
+        return "css";
     }
 
     private static BrowserPickerSelectedElement ParseSelectedElement(JsonElement el) =>

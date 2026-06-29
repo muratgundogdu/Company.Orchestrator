@@ -47,6 +47,28 @@ function ConfidenceBadge({ confidence }: { confidence: BrowserPickerCandidate['c
   );
 }
 
+const CONFIDENCE_ORDER: Record<BrowserPickerCandidate['confidence'], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+function sortCandidates(
+  list: BrowserPickerCandidate[],
+  primary: string,
+): BrowserPickerCandidate[] {
+  return [...list].sort((a, b) => {
+    const conf = CONFIDENCE_ORDER[a.confidence] - CONFIDENCE_ORDER[b.confidence];
+    if (conf !== 0) return conf;
+    if (a.selector === primary) return -1;
+    if (b.selector === primary) return 1;
+    const matchA = a.matchCount === 1 ? 0 : 1;
+    const matchB = b.matchCount === 1 ? 0 : 1;
+    if (matchA !== matchB) return matchA - matchB;
+    return a.selector.length - b.selector.length;
+  });
+}
+
 export default function PickSelectorModal({ initialUrl, onUse, onClose }: PickSelectorModalProps) {
   const [url, setUrl]                   = useState(initialUrl?.trim() || 'https://www.google.com');
   const [sessionId, setSessionId]       = useState<string | null>(null);
@@ -139,13 +161,7 @@ export default function PickSelectorModal({ initialUrl, onUse, onClose }: PickSe
   const original = pick.originalClickedElement ?? EMPTY.originalClickedElement;
   const resolved = pick.resolvedClickableElement ?? pick.selectedElement ?? EMPTY.resolvedClickableElement;
   const primary = pick.primarySelector || pick.selector;
-  const candidates = (() => {
-    const list = pick.candidates ?? [];
-    if (!list.length || !primary) return list;
-    const first = list.find((c) => c.selector === primary);
-    if (!first) return list;
-    return [first, ...list.filter((c) => c.selector !== primary)];
-  })();
+  const candidates = sortCandidates(pick.candidates ?? [], primary);
   const primaryCandidate = candidates.find((c) => c.selector === primary);
 
   return (
@@ -198,12 +214,13 @@ export default function PickSelectorModal({ initialUrl, onUse, onClose }: PickSe
                 </div>
                 {primary && (
                   <div className="pt-2 border-t border-gray-200 space-y-1">
-                    <p className="text-xs font-medium text-gray-500">Recommended Selector</p>
+                    <p className="text-xs font-medium text-gray-500">Recommended (Selector Healing V1)</p>
                     <p className="text-xs font-mono text-teal-800 break-all">{primary}</p>
                     {primaryCandidate && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Confidence:</span>
+                      <div className="flex flex-wrap items-center gap-2">
                         <ConfidenceBadge confidence={primaryCandidate.confidence} />
+                        <span className="text-[10px] font-medium text-gray-500 uppercase">{primaryCandidate.type}</span>
+                        <span className="text-[10px] text-gray-400">matches: {primaryCandidate.matchCount}</span>
                       </div>
                     )}
                   </div>
@@ -217,7 +234,7 @@ export default function PickSelectorModal({ initialUrl, onUse, onClose }: PickSe
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500">Selector candidates</p>
+                <p className="text-xs font-medium text-gray-500">Selector candidates (pick any)</p>
                 {candidates.length === 0 && (
                   <p className="text-xs text-gray-400 italic">Waiting for click…</p>
                 )}
@@ -249,7 +266,8 @@ export default function PickSelectorModal({ initialUrl, onUse, onClose }: PickSe
                               </span>
                             )}
                             <ConfidenceBadge confidence={c.confidence} />
-                            <span className="text-[10px] font-medium text-gray-500 uppercase">{c.strategy}</span>
+                            <span className="text-[10px] font-medium text-gray-500 uppercase">{c.type || 'css'}</span>
+                            <span className="text-[10px] font-medium text-gray-400 uppercase">{c.strategy}</span>
                             <span className="text-[10px] text-gray-400">matches: {c.matchCount}</span>
                           </div>
                           <p className="text-xs font-mono text-gray-800 break-all">{c.selector}</p>

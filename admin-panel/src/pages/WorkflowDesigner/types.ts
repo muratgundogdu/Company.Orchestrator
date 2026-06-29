@@ -67,5 +67,7 @@ export interface AvailableVariable {
   description: string;
   sourceNodeId: string;
   sourceNodeName: string;
+  /** Backend step type of the producing node — used for picker grouping. */
+  sourceStepType?: string;
   kind: 'variable' | 'artifact';
 }

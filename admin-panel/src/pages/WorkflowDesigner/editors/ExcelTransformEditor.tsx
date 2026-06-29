@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import type { EditorProps } from './types';
 import EditableNumberInput from './EditableNumberInput';
+import TransformColumnExpressionField from './TransformColumnExpressionField';
 
 // ── Operation metadata ────────────────────────────────────────────────────────
 
@@ -955,19 +956,13 @@ function OpFields({
             </F>
           </div>
           <F label="Expression" error={err('expression')}>
-            <input
+            <TransformColumnExpressionField
               value={str('expression', 'toNumber(value) / 100')}
-              onChange={(e) => onUpdate({ expression: e.target.value })}
-              className={`${IC} font-mono${err('expression') ? ' border-red-400 focus:ring-red-400' : ''}`}
-              spellCheck={false}
+              onChange={(expression) => onUpdate({ expression })}
+              onFocus={focus('expression')}
+              hasError={Boolean(err('expression'))}
             />
           </F>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            Helpers: <code className="bg-gray-100 px-0.5 rounded">toNumber(value)</code>,{' '}
-            <code className="bg-gray-100 px-0.5 rounded">toNumber(value) / 100</code>,{' '}
-            <code className="bg-gray-100 px-0.5 rounded">removeLeadingZeros(value)</code>,{' '}
-            <code className="bg-gray-100 px-0.5 rounded">trim(value)</code>
-          </p>
           <F label="Target Header">
             <input value={str('targetHeader', 'Converted Amount')} onChange={(e) => onUpdate({ targetHeader: e.target.value })} className={IC} />
           </F>

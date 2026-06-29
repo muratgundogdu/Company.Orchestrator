@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Node } from 'reactflow';
-import { Trash2, ChevronDown, ChevronRight, Zap, Code2, LayoutList, RefreshCw } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Zap, Code2, LayoutList, RefreshCw, File } from 'lucide-react';
 import type { RetryPolicy } from './types';
 import { getNodeDef } from './utils';
 import type { AvailableVariable, WorkflowNodeData } from './types';
+import {
+  groupPickerVariables,
+  PICKER_CATEGORY_LABELS,
+  type PickerCategory,
+} from './nodeOutputDiscovery';
+import {
+  applyArtifactBindingToConfig,
+  getArtifactInputField,
+} from './artifactBinding';
 import type { ValidationError, ValidationWarning } from './validation';
 import FolderReadEditor from './editors/FolderReadEditor';
 import FolderWriteEditor from './editors/FolderWriteEditor';
@@ -181,6 +190,7 @@ interface PropertiesPanelProps {
   availableVariables: AvailableVariable[];
   onUpdate: (data: WorkflowNodeData) => void;
   onDelete: () => void;
+  onMarkArtifactFieldManual?: (nodeId: string, field: string) => void;
   validationErrors?:   ValidationError[];
   validationWarnings?: ValidationWarning[];
 }
@@ -192,6 +202,7 @@ export default function PropertiesPanel({
   availableVariables,
   onUpdate,
   onDelete,
+  onMarkArtifactFieldManual,
   validationErrors   = [],
   validationWarnings = [],
 }: PropertiesPanelProps) {
@@ -302,6 +313,14 @@ export default function PropertiesPanel({
 
   // Called by form editors
   function handleFormChange(newConfig: Record<string, unknown>) {
+    const artifactField = getArtifactInputField(nodeRef.current.data.stepType);
+    if (artifactField && onMarkArtifactFieldManual) {
+      const oldValue = String(nodeRef.current.data.config[artifactField] ?? '');
+      const newValue = String(newConfig[artifactField] ?? '');
+      if (oldValue !== newValue) {
+        onMarkArtifactFieldManual(nodeRef.current.id, artifactField);
+      }
+    }
     applyConfig(newConfig);
   }
 
@@ -348,14 +367,30 @@ export default function PropertiesPanel({
   }
 
   // ── Variable insertion ────────────────────────────────────────────────────────
-  function insertVariable(insertValue: string) {
+  function insertVariable(variable: AvailableVariable) {
+    const stepType = nodeRef.current.data.stepType;
+
+    if (variable.kind === 'artifact') {
+      const boundConfig = applyArtifactBindingToConfig(
+        stepType,
+        nodeRef.current.data.config,
+        variable.insertValue,
+      );
+      if (boundConfig) {
+        const field = getArtifactInputField(stepType);
+        if (field) onMarkArtifactFieldManual?.(nodeRef.current.id, field);
+        applyConfig(boundConfig);
+        return;
+      }
+    }
+
     let focused = focusedRef.current ?? lastFocusedRef.current;
 
     // Form mode: never append raw text to JSON — use last focused field or bail
     if (!focused && !advancedMode) return;
 
     if (!focused && advancedMode) {
-      const newText = configText + insertValue;
+      const newText = configText + variable.insertValue;
       setConfigText(newText);
       try {
         const parsed = JSON.parse(newText) as Record<string, unknown>;
@@ -370,6 +405,7 @@ export default function PropertiesPanel({
     if (!focused) return;
 
     const { el, key } = focused;
+    const insertValue = variable.insertValue;
     const start = el.selectionStart ?? el.value.length;
     const end   = el.selectionEnd   ?? el.value.length;
     const newValue = el.value.slice(0, start) + insertValue + el.value.slice(end);
@@ -407,14 +443,12 @@ export default function PropertiesPanel({
   }
 
   // ── Variable grouping ─────────────────────────────────────────────────────────
-  const grouped = availableVariables.reduce<Map<string, { name: string; vars: AvailableVariable[] }>>(
-    (acc, v) => {
-      if (!acc.has(v.sourceNodeId)) acc.set(v.sourceNodeId, { name: v.sourceNodeName, vars: [] });
-      acc.get(v.sourceNodeId)!.vars.push(v);
-      return acc;
-    },
-    new Map(),
+  const pickerGroups = useMemo(
+    () => groupPickerVariables(availableVariables),
+    [availableVariables],
   );
+
+  const pickerCategoryOrder: PickerCategory[] = ['artifacts', 'step-outputs', 'variables'];
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -678,7 +712,7 @@ export default function PropertiesPanel({
             >
               <div className="flex items-center gap-1.5">
                 <Zap size={12} className="text-blue-500" />
-                <span className="text-xs font-semibold text-gray-700">Available Variables</span>
+                <span className="text-xs font-semibold text-gray-700">Variable Picker</span>
                 <span className="rounded-full bg-blue-100 text-blue-600 text-xs px-1.5 font-medium">
                   {availableVariables.length}
                 </span>
@@ -695,24 +729,52 @@ export default function PropertiesPanel({
                     ? 'Click a chip to insert at cursor in the JSON above.'
                     : 'Focus a text field above, then click a chip to insert.'}
                 </p>
-                {[...grouped.entries()].map(([srcId, { name: srcName, vars }]) => {
-                  const dotColor = vars[0]?.kind === 'variable' ? '#3b82f6' : '#6b7280';
+                {pickerCategoryOrder.map((category) => {
+                  const vars = pickerGroups[category];
+                  if (vars.length === 0) return null;
+
+                  const byNode = vars.reduce<Map<string, { name: string; items: AvailableVariable[] }>>(
+                    (acc, v) => {
+                      if (!acc.has(v.sourceNodeId)) {
+                        acc.set(v.sourceNodeId, { name: v.sourceNodeName, items: [] });
+                      }
+                      acc.get(v.sourceNodeId)!.items.push(v);
+                      return acc;
+                    },
+                    new Map(),
+                  );
+
+                  const dotColor = category === 'artifacts'
+                    ? '#6366f1'
+                    : category === 'variables'
+                      ? '#0ea5e9'
+                      : '#3b82f6';
+
                   return (
-                    <div key={srcId}>
-                      <p className="text-xs text-gray-500 font-medium mb-1.5 flex items-center gap-1">
-                        <span
-                          className="w-1.5 h-1.5 rounded-full inline-block shrink-0"
-                          style={{ background: dotColor }}
-                        />
-                        {srcName}
+                    <div key={category}>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
+                        {PICKER_CATEGORY_LABELS[category]}
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {vars.map((v) => (
-                          <VariableChip
-                            key={v.insertValue}
-                            variable={v}
-                            onClick={() => insertVariable(v.insertValue)}
-                          />
+                      <div className="space-y-2">
+                        {[...byNode.entries()].map(([srcId, { name: srcName, items }]) => (
+                          <div key={`${category}-${srcId}`}>
+                            <p className="text-xs text-gray-500 font-medium mb-1 flex items-center gap-1">
+                              <span
+                                className="w-1.5 h-1.5 rounded-full inline-block shrink-0"
+                                style={{ background: dotColor }}
+                              />
+                              {srcName}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {items.map((v) => (
+                                <VariableChip
+                                  key={`${category}-${srcId}-${v.insertValue}`}
+                                  variable={v}
+                                  onClick={() => insertVariable(v)}
+                                />
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -754,7 +816,7 @@ function VariableChip({ variable: v, onClick }: ChipProps) {
       }`}
     >
       {isVar  && <span className="opacity-50 text-xs">{'{{'}</span>}
-      {!isVar && <span className="opacity-50 mr-0.5 text-xs">📄</span>}
+      {!isVar && <File size={11} className="opacity-60 shrink-0" aria-hidden />}
       <span>{v.label}</span>
       {isVar  && <span className="opacity-50 text-xs">{'}}'}</span>}
     </button>

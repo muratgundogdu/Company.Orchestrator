@@ -41,4 +41,8 @@
     <ProjectReference Include="..\Company.Orchestrator.Application\Company.Orchestrator.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Company.Orchestrator.Infrastructure.Tests" />
+  </ItemGroup>
+
 </Project>

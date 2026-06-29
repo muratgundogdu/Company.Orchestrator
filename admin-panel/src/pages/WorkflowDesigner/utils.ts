@@ -1,5 +1,6 @@
 import { Edge, MarkerType, Node } from 'reactflow';
 import { NODE_DEFS } from './nodeDefinitions';
+import { resolveRegisteredNodeOutputs } from './nodeOutputDiscovery';
 import type { AvailableVariable, WorkflowDefinition, WorkflowNodeData, WorkflowStep } from './types';
 
 // ── ID generation ──────────────────────────────────────────────────────────────
@@ -454,61 +455,12 @@ export function getNodeDef(stepType: string) {
  */
 export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVariable[] {
   const { stepType, config, name: sourceNodeName } = node.data;
-  const base = { sourceNodeId: node.id, sourceNodeName };
+  const base = { sourceNodeId: node.id, sourceNodeName, sourceStepType: stepType };
+
+  const registered = resolveRegisteredNodeOutputs(stepType, config, base);
+  if (registered) return registered;
 
   switch (stepType) {
-    case 'mail.read-attachments': {
-      // The backend key is outputVariable (also accepts outputVar for legacy)
-      const v = String(config.outputVariable ?? config.outputVar ?? 'mailArtifacts');
-      return [
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}_0}}`, label: `${v}_0`,
-          description: 'First attachment artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}_1}}`, label: `${v}_1`,
-          description: 'Second attachment artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}_first}}`, label: `${v}_first`,
-          description: 'Alias for _0 — first attachment',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}_count}}`, label: `${v}_count`,
-          description: 'Total number of attachments downloaded',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}}}`, label: v,
-          description: 'JSON array of all artifact names',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{selectedMessageId}}', label: 'selectedMessageId',
-          description: 'IMAP UID of the processed email',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{selectedMessageFolder}}', label: 'selectedMessageFolder',
-          description: 'Folder of the processed email',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{selectedEmailSubject}}', label: 'selectedEmailSubject',
-          description: 'Subject of the processed email',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{selectedEmailFrom}}', label: 'selectedEmailFrom',
-          description: 'Sender of the processed email',
-        },
-      ];
-    }
-
     case 'mail.get-body': {
       const v = String(config.outputVariable ?? 'mailBody');
       return [
@@ -693,32 +645,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
       return vars;
     }
 
-    case 'csv.write': {
-      const artifact = String(config.outputName ?? 'output.csv');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: artifact, label: artifact,
-          description: 'Output CSV artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{outputName}}', label: 'outputName',
-          description: 'Name of the CSV artifact produced by this step',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{rowsWritten}}', label: 'rowsWritten',
-          description: 'Number of data rows written',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{columnsWritten}}', label: 'columnsWritten',
-          description: 'Number of columns written',
-        },
-      ];
-    }
-
     case 'json.read-file': {
       const artifact = String(config.inputArtifactName ?? 'source-file');
       const v = String(config.outputVariable ?? 'jsonData');
@@ -757,27 +683,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
         });
       }
       return vars;
-    }
-
-    case 'json.write-file': {
-      const artifact = String(config.outputName ?? 'output.json');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: artifact, label: artifact,
-          description: 'Output JSON artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{outputName}}', label: 'outputName',
-          description: 'Name of the JSON artifact produced by this step',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{bytesWritten}}', label: 'bytesWritten',
-          description: 'Size of the written JSON file in bytes',
-        },
-      ];
     }
 
     case 'zip.extract': {
@@ -819,32 +724,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
         });
       }
       return vars;
-    }
-
-    case 'zip.create': {
-      const artifact = String(config.outputName ?? 'reports.zip');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: artifact, label: artifact,
-          description: 'Output ZIP artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{outputName}}', label: 'outputName',
-          description: 'Name of the ZIP artifact produced by this step',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{filesZipped}}', label: 'filesZipped',
-          description: 'Number of files added to the ZIP',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{zipSizeBytes}}', label: 'zipSizeBytes',
-          description: 'Size of the ZIP file in bytes',
-        },
-      ];
     }
 
     case 'pdf.read-text': {
@@ -924,44 +803,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
       return vars;
     }
 
-    case 'word.fill-template': {
-      const inputArtifact = String(config.inputArtifactName ?? 'template.docx');
-      const artifact      = String(config.outputName ?? 'generated.docx');
-      const v             = String(config.outputVariable ?? 'generatedDocument');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: inputArtifact, label: inputArtifact,
-          description: 'Input Word template artifact name',
-        },
-        {
-          ...base, kind: 'artifact',
-          insertValue: artifact, label: artifact,
-          description: 'Generated Word document artifact name',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: `{{${v}}}`, label: v,
-          description: 'Generated document artifact name (same as outputName)',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{outputName}}', label: 'outputName',
-          description: 'Name of the generated Word document artifact',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{placeholdersReplaced}}', label: 'placeholdersReplaced',
-          description: 'Number of placeholders successfully replaced',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{missingPlaceholders}}', label: 'missingPlaceholders',
-          description: 'Comma-separated list of placeholders with missing variables',
-        },
-      ];
-    }
-
     case 'excel.read': {
       const v = String(config.outputVariable ?? config.outputVar ?? 'excelData');
       return [
@@ -1012,32 +853,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
       return vars;
     }
 
-    case 'excel.write-datatable': {
-      const artifact = String(config.inputArtifactName ?? 'report.xlsx');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: artifact, label: artifact,
-          description: 'Updated Excel workbook artifact',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{outputArtifactName}}', label: 'outputArtifactName',
-          description: 'Name of the updated workbook artifact',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{rowsWritten}}', label: 'rowsWritten',
-          description: 'Number of data rows written',
-        },
-        {
-          ...base, kind: 'variable',
-          insertValue: '{{columnsWritten}}', label: 'columnsWritten',
-          description: 'Number of columns written',
-        },
-      ];
-    }
-
     case 'excel.append-datatable': {
       const artifact = String(config.inputArtifactName ?? 'history.xlsx');
       return [
@@ -1060,17 +875,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
           ...base, kind: 'variable',
           insertValue: '{{lastRowAfterAppend}}', label: 'lastRowAfterAppend',
           description: 'Last row number after append',
-        },
-      ];
-    }
-
-    case 'excel.transform': {
-      const name = String(config.outputName ?? 'transformed');
-      return [
-        {
-          ...base, kind: 'artifact',
-          insertValue: `${name}.xlsx`, label: `${name}.xlsx`,
-          description: 'Artifact name of the transformed Excel file',
         },
       ];
     }
@@ -1473,45 +1277,6 @@ export function inferOutputVariables(node: Node<WorkflowNodeData>): AvailableVar
           description: 'Attribute value read from the page element',
         },
       ];
-    }
-
-    case 'browser.screenshot':
-    case 'browser.download':
-    case 'browser.wait-for-download':
-    case 'browser.wait-download': {
-      let name = String(config.artifactName ?? 'browser-artifact');
-      if (stepType === 'browser.screenshot' && !name.toLowerCase().endsWith('.png')) {
-        name += '.png';
-      }
-      const vars: AvailableVariable[] = [
-        {
-          ...base, kind: 'artifact',
-          insertValue: name, label: name,
-          description: stepType === 'browser.screenshot'
-            ? 'Screenshot PNG artifact'
-            : 'Downloaded file artifact',
-        },
-      ];
-      if (stepType === 'browser.wait-download') {
-        vars.push(
-          {
-            ...base, kind: 'variable',
-            insertValue: '{{artifactName}}', label: 'artifactName',
-            description: 'Name of the downloaded artifact',
-          },
-          {
-            ...base, kind: 'variable',
-            insertValue: '{{downloadedFileName}}', label: 'downloadedFileName',
-            description: 'Downloaded file name (may include preserved extension)',
-          },
-          {
-            ...base, kind: 'variable',
-            insertValue: '{{downloadedFileSizeBytes}}', label: 'downloadedFileSizeBytes',
-            description: 'Downloaded file size in bytes',
-          },
-        );
-      }
-      return vars;
     }
 
     case 'browser.element-exists': {

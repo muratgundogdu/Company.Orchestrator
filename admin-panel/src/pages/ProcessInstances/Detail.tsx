@@ -1,17 +1,26 @@
 import { Link, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, Briefcase, Archive, FileText, FileWarning, File, Download,
-  RefreshCw, AlertTriangle,
+  RefreshCw, AlertTriangle, Check, X, Loader2, Wifi, WifiOff,
 } from 'lucide-react';
 import { processInstanceApi, jobApi, artifactApi } from '../../api/endpoints';
 import { useApi } from '../../hooks/useApi';
-import type { JobLogDto } from '../../api/types';
+import { useInstanceMonitoring, type LiveConnectionStatus } from '../../hooks/useInstanceMonitoring';
+import type { JobLogDto, ProcessInstanceDto } from '../../api/types';
 import PageHeader from '../../components/PageHeader';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
 import { ProcessStatusBadge, StepStatusBadge, JobStatusBadge } from '../../components/StatusBadge';
 import { fmtDate, fmtDuration, elapsed, fmtBytes, shortId } from '../../utils/format';
-import { StepStatus } from '../../api/types';
+import { downloadArtifact } from '../../utils/downloadArtifact';
+import { ProcessStatus, StepStatus } from '../../api/types';
+import {
+  applyInstanceCompleted,
+  applyStepCompleted,
+  applyStepFailed,
+  applyStepStarted,
+} from '../../monitoring/applyInstanceMonitoringEvent';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -43,28 +52,179 @@ function levelClass(level: string): string {
   }
 }
 
+function LiveStatusBadge({ status }: { status: LiveConnectionStatus }) {
+  switch (status) {
+    case 'connecting':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
+          <Loader2 size={12} className="animate-spin" />
+          Connecting...
+        </span>
+      );
+    case 'connected':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200">
+          <Wifi size={12} />
+          Live connected
+        </span>
+      );
+    case 'disconnected':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200">
+          <WifiOff size={12} />
+          Live disconnected - polling
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+function isTerminalStatus(status: ProcessStatus): boolean {
+  return status === ProcessStatus.Success
+    || status === ProcessStatus.Failed
+    || status === ProcessStatus.Cancelled;
+}
+
+const ACTIVE_POLL_INTERVAL_MS = 3000;
+const LIVE_REFETCH_DEBOUNCE_MS = 500;
+
 export default function ProcessInstanceDetail() {
   const { id } = useParams<{ id: string }>();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [inst, setInst] = useState<ProcessInstanceDto | null>(null);
 
-  const { data: inst, loading, error, refetch } = useApi(
+  async function handleDownload(artifactId: string, name: string) {
+    setDownloadingId(artifactId);
+    try {
+      await downloadArtifact(artifactId, name);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Download failed');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
+  const { data: fetchedInst, loading, error, refetch } = useApi(
     () => processInstanceApi.getById(id!),
     [id],
   );
-  const { data: jobsData } = useApi(
+  const { data: jobsData, refetch: refetchJobs } = useApi(
     () => jobApi.list(1, 50, id),
     [id],
   );
-  const { data: artifacts } = useApi(
+  const { data: artifacts, refetch: refetchArtifacts } = useApi(
     () => artifactApi.getByProcessInstance(id!),
     [id],
   );
-  const { data: instanceLogs } = useApi(
+  const { data: instanceLogs, refetch: refetchLogs } = useApi(
     () => processInstanceApi.getLogs(id!),
     [id],
   );
 
+  useEffect(() => {
+    if (fetchedInst) setInst(fetchedInst);
+  }, [fetchedInst]);
+
+  const refetchAllSilent = useCallback(() => {
+    refetch({ silent: true });
+    refetchJobs({ silent: true });
+    refetchArtifacts({ silent: true });
+    refetchLogs({ silent: true });
+  }, [refetch, refetchJobs, refetchArtifacts, refetchLogs]);
+
+  const refetchAll = useCallback(() => {
+    refetch();
+    refetchJobs();
+    refetchArtifacts();
+    refetchLogs();
+  }, [refetch, refetchJobs, refetchArtifacts, refetchLogs]);
+
+  const debouncedRefetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushDebouncedRefetch = useCallback(() => {
+    if (debouncedRefetchRef.current) {
+      clearTimeout(debouncedRefetchRef.current);
+      debouncedRefetchRef.current = null;
+    }
+    refetchAllSilent();
+  }, [refetchAllSilent]);
+
+  const scheduleDebouncedRefetch = useCallback(() => {
+    if (debouncedRefetchRef.current) clearTimeout(debouncedRefetchRef.current);
+    debouncedRefetchRef.current = setTimeout(() => {
+      debouncedRefetchRef.current = null;
+      refetchAllSilent();
+    }, LIVE_REFETCH_DEBOUNCE_MS);
+  }, [refetchAllSilent]);
+
+  useEffect(() => () => {
+    if (debouncedRefetchRef.current) clearTimeout(debouncedRefetchRef.current);
+  }, []);
+
+  const instanceStatus = (inst ?? fetchedInst)?.status;
+  const isPending = instanceStatus === ProcessStatus.Pending;
+  const isInstanceRunning = instanceStatus === ProcessStatus.Running;
+  const isActive = isPending || isInstanceRunning;
+  const stepCount = inst?.steps.length ?? fetchedInst?.steps.length ?? 0;
+
+  const monitoringReady = !loading && !!fetchedInst;
+  const signalREnabled = monitoringReady && isInstanceRunning;
+
+  const [joinGeneration, setJoinGeneration] = useState(0);
+
+  const handleJoined = useCallback(() => {
+    refetchAllSilent();
+    setJoinGeneration((g) => g + 1);
+  }, [refetchAllSilent]);
+
+  const applyUpdate = useCallback((updater: (current: ProcessInstanceDto) => ProcessInstanceDto) => {
+    setInst((current) => (current ? updater(current) : current));
+  }, []);
+
+  const { status: liveStatus } = useInstanceMonitoring({
+    processInstanceId: id,
+    enabled: signalREnabled,
+    onStepStarted: (event) => applyUpdate((current) => applyStepStarted(current, event)),
+    onStepCompleted: (event) => {
+      applyUpdate((current) => applyStepCompleted(current, event));
+      scheduleDebouncedRefetch();
+    },
+    onStepFailed: (event) => {
+      applyUpdate((current) => applyStepFailed(current, event));
+      scheduleDebouncedRefetch();
+    },
+    onInstanceCompleted: (event) => {
+      applyUpdate((current) => applyInstanceCompleted(current, event));
+      flushDebouncedRefetch();
+    },
+    onJoined: handleJoined,
+  });
+
+  // Safety refetch once ~5s after each successful SignalR join.
+  useEffect(() => {
+    if (!signalREnabled || liveStatus !== 'connected') return;
+    const timer = setTimeout(() => refetchAllSilent(), 5000);
+    return () => clearTimeout(timer);
+  }, [joinGeneration, liveStatus, signalREnabled, refetchAllSilent]);
+
+  // Poll while Pending/Running: always for Pending, when SignalR down, or until steps appear.
+  useEffect(() => {
+    if (!monitoringReady || !isActive) return;
+
+    const shouldPoll =
+      isPending
+      || liveStatus !== 'connected'
+      || stepCount === 0;
+
+    if (!shouldPoll) return;
+
+    const timer = setInterval(() => refetchAllSilent(), ACTIVE_POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [monitoringReady, isActive, isPending, liveStatus, stepCount, refetchAllSilent]);
+
   if (loading) return <LoadingSpinner />;
-  if (error)   return <ErrorAlert message={error} onRetry={refetch} />;
+  if (error)   return <ErrorAlert message={error} onRetry={refetchAll} />;
   if (!inst)   return null;
 
   const logsByStep = groupLogsByStep(instanceLogs ?? []);
@@ -82,9 +242,26 @@ export default function ProcessInstanceDetail() {
         title={inst.processDefinitionName}
         subtitle={`Instance ${shortId(inst.id)} — v${inst.versionNumber}`}
         actions={
-          <Link to="/process-instances" className="btn btn-secondary">
-            <ArrowLeft size={14} /> Back
-          </Link>
+          <div className="flex items-center gap-2">
+            {isInstanceRunning && <LiveStatusBadge status={liveStatus} />}
+            {isPending && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-gray-50 text-gray-600 border border-gray-200">
+                <Loader2 size={12} className="animate-spin" />
+                Polling…
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => refetchAll()}
+              className="btn btn-secondary"
+              title="Refresh"
+            >
+              <RefreshCw size={14} /> Refresh
+            </button>
+            <Link to="/process-instances" className="btn btn-secondary">
+              <ArrowLeft size={14} /> Back
+            </Link>
+          </div>
         }
       />
 
@@ -124,7 +301,20 @@ export default function ProcessInstanceDetail() {
           <h3 className="font-semibold text-gray-700">Steps ({inst.steps.length})</h3>
         </div>
         {inst.steps.length === 0 ? (
-          <p className="text-center text-gray-400 py-10 text-sm">No steps recorded</p>
+          isPending ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Loader2 size={28} className="animate-spin text-blue-500 mb-3" />
+              <p className="text-sm text-gray-600 font-medium">Workflow queued, waiting for worker…</p>
+              <p className="text-xs text-gray-400 mt-1">Worker bekleniyor…</p>
+            </div>
+          ) : isInstanceRunning ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Loader2 size={28} className="animate-spin text-blue-500 mb-3" />
+              <p className="text-sm text-gray-600 font-medium">Starting workflow…</p>
+            </div>
+          ) : isTerminalStatus(inst.status) ? (
+            <p className="text-center text-gray-400 py-10 text-sm">No steps recorded</p>
+          ) : null
         ) : (
           <div className="divide-y divide-gray-100">
             {sortedSteps.map((step, idx) => {
@@ -132,23 +322,40 @@ export default function ProcessInstanceDetail() {
               const retryEntries = retryLogs(stepLogList);
               const hadRetries   = (step.attemptNumber ?? 1) > 1 || retryEntries.length > 0;
               const isExhausted  = step.status === StepStatus.Failed && hadRetries;
+              const isRunning    = step.status === StepStatus.Running;
+
+              const stepIcon = step.status === StepStatus.Success
+                ? <Check size={14} />
+                : step.status === StepStatus.Failed
+                  ? <X size={14} />
+                  : isRunning
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : idx + 1;
 
               return (
                 <div
                   key={step.id}
-                  className={`flex items-start gap-4 px-4 py-3 ${isExhausted ? 'bg-red-50' : hadRetries ? 'bg-amber-50' : ''}`}
+                  className={`flex items-start gap-4 px-4 py-3 ${
+                    isRunning
+                      ? 'bg-blue-50 ring-1 ring-inset ring-blue-200'
+                      : isExhausted
+                        ? 'bg-red-50'
+                        : hadRetries
+                          ? 'bg-amber-50'
+                          : ''
+                  }`}
                 >
-                  {/* Step number */}
+                  {/* Step number / status icon */}
                   <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0 mt-0.5 ${
                     step.status === StepStatus.Success
                       ? 'bg-green-100 text-green-700'
                       : step.status === StepStatus.Failed
                         ? 'bg-red-100 text-red-700'
-                        : step.status === StepStatus.Running
+                        : isRunning
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-gray-100 text-gray-500'
                   }`}>
-                    {idx + 1}
+                    {stepIcon}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -301,13 +508,15 @@ export default function ProcessInstanceDetail() {
                     <td className="table-td text-gray-500 text-sm">{fmtBytes(a.sizeBytes)}</td>
                     <td className="table-td text-gray-500 text-sm">{fmtDate(a.createdAt)}</td>
                     <td className="table-td">
-                      <a
-                        href={a.downloadUrl}
-                        className={`btn btn-sm ${isFailureReport ? 'btn-danger' : 'btn-secondary'}`}
-                        download={a.name}
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(a.id, a.name)}
+                        disabled={downloadingId === a.id}
+                        className={`btn btn-sm inline-flex items-center gap-1 ${isFailureReport ? 'btn-danger' : 'btn-secondary'}`}
                       >
-                        <Download size={12} /> Download
-                      </a>
+                        <Download size={12} />
+                        {downloadingId === a.id ? 'Downloading…' : 'Download'}
+                      </button>
                     </td>
                   </tr>
                 );

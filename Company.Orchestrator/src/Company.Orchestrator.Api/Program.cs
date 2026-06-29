@@ -1,4 +1,7 @@
 using Company.Orchestrator.Application;
+using Company.Orchestrator.Application.Common.Interfaces;
+using Company.Orchestrator.Api.Hubs;
+using Company.Orchestrator.Api.Monitoring;
 using Company.Orchestrator.Infrastructure;
 using Company.Orchestrator.Infrastructure.Auth;
 using Company.Orchestrator.Infrastructure.Persistence;
@@ -7,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
+using System.Text.Json;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -39,6 +43,13 @@ try
     builder.Services.AddAlterOneAuth(builder.Configuration);
     builder.Services.AddHostedService<Company.Orchestrator.Infrastructure.Audit.AuditRetentionBackgroundService>();
     builder.Services.AddHostedService<Company.Orchestrator.Infrastructure.Audit.WorkerStatusAuditBackgroundService>();
+
+    builder.Services.AddSignalR()
+        .AddJsonProtocol(options =>
+        {
+            options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
+    builder.Services.AddScoped<IInstanceMonitoringPublisher, SignalRInstanceMonitoringPublisher>();
 
     Log.Information(
         "Data Protection key ring: {KeysPath} (ApplicationName={ApplicationName})",
@@ -80,10 +91,18 @@ try
         });
     });
 
-    // CORS
+    // CORS — specific origins required for SignalR with credentials (JWT access_token).
     builder.Services.AddCors(options =>
-        options.AddDefaultPolicy(policy =>
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+    {
+        options.AddPolicy("AdminPanelCors", policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173", "http://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+    });
 
     var app = builder.Build();
 
@@ -111,10 +130,11 @@ try
         options.RoutePrefix = string.Empty;
     });
 
-    app.UseCors();
+    app.UseCors("AdminPanelCors");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+    app.MapHub<InstanceMonitoringHub>("/hubs/instances");
 
     await app.RunAsync();
 }

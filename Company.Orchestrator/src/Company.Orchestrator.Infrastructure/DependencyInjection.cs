@@ -17,6 +17,7 @@ using Company.Orchestrator.Infrastructure.Capabilities.File;
 using Company.Orchestrator.Infrastructure.Capabilities.Folder;
 using Company.Orchestrator.Infrastructure.Capabilities.Mail;
 using Company.Orchestrator.Infrastructure.Capabilities.Registry;
+using Company.Orchestrator.Infrastructure.Monitoring;
 using Company.Orchestrator.Infrastructure.Persistence;
 using Company.Orchestrator.Infrastructure.Repositories;
 using Company.Orchestrator.Infrastructure.Security;
@@ -234,6 +235,8 @@ public static class DependencyInjection
 
         // ---- Workflow Engine ----
         services.AddScoped<IWorkflowEngine, WorkflowEngine.WorkflowEngine>();
+
+        services.AddScoped<IInstanceMonitoringPublisher, NoOpInstanceMonitoringPublisher>();
 
         // ---- HttpClient for HTTP step handlers ----
         services.AddHttpClient("WorkflowApiCall")
